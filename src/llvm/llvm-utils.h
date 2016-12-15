@@ -75,8 +75,102 @@ inline bool callIsCompatible(const Function *F, const CallInst *CI)
     return true;
 }
 
+
+/* ----------------------------------------------
+ * -- VALUE AND INSTRUCTIONS HELPERS
+ * ---------------------------------------------- */
+template <typename ValueT>
+struct ValueInfo {
+    const ValueT *value;
+
+    ValueInfo(const ValueT& val) : value(&val) {}
+    ValueInfo(const ValueT *val) : value(val) {}
+
+    template <typename T>
+    bool isa() const { return llvm::isa<T>(value); }
+    template <typename T>
+    T* get() const { return llvm::dyn_cast<T>(value); }
+
+    const ValueT operator*() { return *value; }
+    const ValueT* operator*() const { return value; }
+    const ValueT* operator->() { return value; }
+    const ValueT* operator->() const { return value; }
+    operator const ValueT*() const { return value; }
+    explicit operator bool() const { return value != nullptr; }
+
+    bool isConstantZero() const {
+        using namespace llvm;
+        if (const ConstantInt *C = dyn_cast<ConstantInt>(val))
+            return C->isZero();
+        return false;
+    }
+};
+
+// InstT is either const or non-const llvm::Instuction
+template <typename InstT>
+struct InstInfo : public ValueInfo<InstT> {
+    InstInfo(const InstT& I) : ValueInfo<InstT>(&I) {
+        assert(llvm::isa<llvm::Instruction>(&I));
+    }
+
+    InstInfo(const InstT *I) : ValueInfo<InstT>(I) {
+        assert(llvm::isa<llvm::Instruction>(I));
+    }
+
+    operator const llvm::Instruction *() const { return this->value; }
+
+    //ValueInfo getOperand(int idx) { return ValueInfo(instr->getOperand(idx); }
+    //ConstValueInfo getOperand(int idx) const { return ConstValueInfo(instr->getOperand(idx); }
+
+    bool isCallTo(const char *name) const
+    {
+      using namespace llvm;
+      if (const CallInst *CI = dyn_cast<CallInst>(this->value)) {
+        const Function *F
+            = dyn_cast<Function>(CI->getCalledValue()->stripPointerCasts());
+        return F && F->getName().equals(name);
+      }
+
+      return false;
+    }
+
+    template <typename T>
+    bool isCallTo(const std::initializer_list<T> &names) const
+    {
+      using namespace llvm;
+      if (const CallInst *CI = dyn_cast<CallInst>(this->value)) {
+        const Function *F
+            = dyn_cast<Function>(CI->getCalledValue()->stripPointerCasts());
+        if (F) {
+            for (const auto& name : names) {
+                if (F->getName().equals(name))
+                    return true;
+            }
+        }
+      }
+
+      return false;
+    }
+};
+
+struct CallInstInfo : public InstInfo<llvm::CallInst> {
+    CallInstInfo(const llvm::CallInst& I) : InstInfo<llvm::CallInst>(&I) {}
+    CallInstInfo(const llvm::CallInst *I) : InstInfo<llvm::CallInst>(I) {}
+
+    CallInstInfo(const llvm::Instruction &I)
+        : InstInfo<llvm::CallInst>(llvm::cast<llvm::CallInst>(I)) {}
+    CallInstInfo(const llvm::Instruction *I)
+        : InstInfo<llvm::CallInst>(llvm::cast<llvm::CallInst>(I)) {}
+
+    const Function *getFunction() const {
+        return llvm::dyn_cast<llvm::Function>(
+            this->value->getCalledValue()->stripPointerCasts()
+        );
+    }
+};
+
 } // namespace llvmutils
 } // namespace dg
 
-#endif //  _DG_LLVM_UTILS_H_
+#endif //_DG_LLVM_UTILS_H_
 
