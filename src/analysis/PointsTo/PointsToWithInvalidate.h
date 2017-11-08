@@ -5,22 +5,14 @@
 
 #include "Pointer.h"
 #include "PointerSubgraph.h"
+#include "PointsToFlowSensitive.h"
 
 namespace dg {
 namespace analysis {
 namespace pta {
 
-class PointsToWithInvalidate : public PointerAnalysis
+class PointsToWithInvalidate : public PointsToFlowSensitive
 {
-public:
-    using MemoryObjectsSetT = std::set<MemoryObject *>;
-    using MemoryMapT = std::map<const Pointer, MemoryObjectsSetT>;
-
-    // this is an easy but not very efficient implementation,
-    // works for testing
-    PointsToWithInvalidate(PointerSubgraph *ps)
-    : PointerAnalysis(ps, UNKNOWN_OFFSET, false, true) {}
-
     static bool canChangeMM(PSNode *n) {
         if (n->predecessorsNum() == 0 || // root node
             n->getType() == PSNodeType::STORE ||
@@ -31,6 +23,14 @@ public:
 
         return false;
     }
+
+public:
+    using MemoryMapT = PointsToFlowSensitive::MemoryMapT;
+
+    // this is an easy but not very efficient implementation,
+    // works for testing
+    PointsToWithInvalidate(PointerSubgraph *ps)
+    : PointsToFlowSensitive(ps) {}
 
     bool beforeProcessed(PSNode *n) override
     {
@@ -120,35 +120,6 @@ public:
         return changed;
     }
 
-    void getMemoryObjects(PSNode *where, const Pointer& pointer,
-                          std::vector<MemoryObject *>& objects) override
-    {
-        MemoryMapT *mm= where->getData<MemoryMapT>();
-        assert(mm && "Node does not have memory map");
-
-        auto bounds = getObjectRange(mm, pointer);
-        for (MemoryMapT::iterator I = bounds.first; I != bounds.second; ++I) {
-            assert(I->first.target == pointer.target
-                    && "Bug in getObjectRange");
-
-            for (MemoryObject *mo : I->second)
-                objects.push_back(mo);
-        }
-
-        assert(bounds.second->first.target != pointer.target
-                && "Bug in getObjectRange");
-
-        // if we haven't found any memory object, but this psnode
-        // is a write to memory, create a new one, so that
-        // the write has something to write to
-        if (objects.empty() && canChangeMM(where)) {
-            MemoryObject *mo = new MemoryObject(pointer.target);
-            (*mm)[pointer].insert(mo);
-            objects.push_back(mo);
-        }
-    }
-   
-    
     void getMemoryObjectsPointingTo(PSNode *where, const Pointer& pointer,
                           std::vector<MemoryObject *>& objects) override
     {
@@ -196,41 +167,6 @@ protected:
 
     PointsToWithInvalidate() = default;
 
-private:
-
-    static bool comp(const std::pair<const Pointer, MemoryObjectsSetT>& a,
-                     const std::pair<const Pointer, MemoryObjectsSetT>& b) {
-        return a.first.target < b.first.target;
-    }
-
-    ///
-    // get interator range for elements that have information
-    // about the ptr.target node (ignoring the offsets)
-    std::pair<MemoryMapT::iterator, MemoryMapT::iterator>
-    getObjectRange(MemoryMapT *mm, const Pointer& ptr) {
-        std::pair<const Pointer, MemoryObjectsSetT> what(ptr, MemoryObjectsSetT());
-        return std::equal_range(mm->begin(), mm->end(), what, comp);
-    }
-
-    ///
-    // Merge two Memory maps, return true if any new information was created,
-    // otherwise return false
-    bool mergeMaps(MemoryMapT *mm, MemoryMapT *pm,
-                   PointsToSetT *strong_update) {
-        bool changed = false;
-        for (auto& it : *pm) {
-            const Pointer& ptr = it.first;
-            if (strong_update && strong_update->count(ptr))
-                continue;
-
-            // use [] to create the object if needed
-            MemoryObjectsSetT& S = (*mm)[ptr];
-            for (auto& elem : it.second)
-                changed |= S.insert(elem).second;
-        }
-
-        return changed;
-    }
 };
 
 } // namespace pta

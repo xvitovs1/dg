@@ -21,15 +21,6 @@ public:
     PointsToFlowSensitive(PointerSubgraph *ps)
     : PointerAnalysis(ps, UNKNOWN_OFFSET, false) {}
 
-    static bool canChangeMM(PSNode *n) {
-        if (n->predecessorsNum() == 0 || // root node
-            n->getType() == PSNodeType::STORE ||
-            n->getType() == PSNodeType::MEMCPY)
-            return true;
-
-        return false;
-    }
-
     bool beforeProcessed(PSNode *n) override
     {
         MemoryMapT *mm = n->getData<MemoryMapT>();
@@ -144,22 +135,6 @@ protected:
 
     PointsToFlowSensitive() = default;
 
-private:
-
-    static bool comp(const std::pair<const Pointer, MemoryObjectsSetT>& a,
-                     const std::pair<const Pointer, MemoryObjectsSetT>& b) {
-        return a.first.target < b.first.target;
-    }
-
-    ///
-    // get interator range for elements that have information
-    // about the ptr.target node (ignoring the offsets)
-    std::pair<MemoryMapT::iterator, MemoryMapT::iterator>
-    getObjectRange(MemoryMapT *mm, const Pointer& ptr) {
-        std::pair<const Pointer, MemoryObjectsSetT> what(ptr, MemoryObjectsSetT());
-        return std::equal_range(mm->begin(), mm->end(), what, comp);
-    }
-
     ///
     // Merge two Memory maps, return true if any new information was created,
     // otherwise return false
@@ -179,6 +154,32 @@ private:
 
         return changed;
     }
+
+private:
+    static bool canChangeMM(PSNode *n) {
+        if (n->predecessorsNum() == 0 || // root node
+            n->getType() == PSNodeType::STORE ||
+            n->getType() == PSNodeType::MEMCPY)
+            return true;
+
+        return false;
+    }
+
+    static bool comp(const std::pair<const Pointer, MemoryObjectsSetT>& a,
+                     const std::pair<const Pointer, MemoryObjectsSetT>& b) {
+        return a.first.target < b.first.target;
+    }
+
+    ///
+    // get interator range for elements that have information
+    // about the ptr.target node (ignoring the offsets)
+    std::pair<MemoryMapT::iterator, MemoryMapT::iterator>
+    getObjectRange(MemoryMapT *mm, const Pointer& ptr) {
+        std::pair<const Pointer, MemoryObjectsSetT> what(ptr, MemoryObjectsSetT());
+        return std::equal_range(mm->begin(), mm->end(), what, comp);
+    }
+
+
 };
 
 } // namespace pta
