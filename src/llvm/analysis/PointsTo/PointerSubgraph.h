@@ -64,6 +64,8 @@ class LLVMPointerSubgraphBuilder
     void addProgramStructure(const llvm::Function *F, Subgraph& subg);
     PSNodesSeq buildBlockStructure(const llvm::BasicBlock& block);
     void blockAddCalls(const llvm::BasicBlock& block);
+    void setNodesParents(const llvm::Function *F, Subgraph& subg);
+    void setNodesParents();
 
     // map of all nodes we created - use to look up operands
     std::unordered_map<const llvm::Value *, PSNodesSeq > nodes_map;
@@ -105,11 +107,26 @@ public:
     const std::unordered_map<const llvm::Value *, PSNodesSeq>&
                                 getNodesMap() const { return nodes_map; }
 
-    PSNode *getNode(const llvm::Value *val)
-    {
+
+    // get nodes sequence that corresponds to the given value
+    const PSNodesSeq& getCorrespondingNodes(const llvm::Value *val) const {
+        // return value for no-match
+        static const PSNodesSeq empty;
+
         auto it = nodes_map.find(val);
         if (it == nodes_map.end())
+            return empty;
+        else
+            return it->second;
+    }
+
+    PSNode *getNode(const llvm::Value *val)
+    {
+        auto& seq = getCorrespondingNodes(val);
+        if (seq.first == nullptr) {
+            assert(seq.second == nullptr);
             return nullptr;
+        }
 
         // the node corresponding to the real llvm value
         // is always the last
@@ -117,7 +134,7 @@ public:
         // XXX: this holds everywhere except for va_start
         // sequence. Maybe we should use a new class
         // instead of std::pair to represent the sequence
-        return it->second.second;
+        return seq.second;
     }
 
     // this is the same as the getNode, but it

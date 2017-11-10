@@ -601,6 +601,7 @@ LLVMPointerSubgraphBuilder::createCallToFunction(const llvm::Function *F)
     // add an edge from last argument to root of the subgraph
     // and from the subprocedure return node (which is one - unified
     // for all return nodes) to return from the call
+    // FIXME: move this to Structure.cpp
     callNode->addSuccessor(subg.root);
     subg.ret->addSuccessor(returnNode);
 
@@ -641,6 +642,7 @@ LLVMPointerSubgraphBuilder::createOrGetSubgraph(const llvm::CallInst *CInst,
 
         addProgramStructure(F, subg);
         addInterproceduralOperands(F, subg, CInst);
+        setNodesParents(F, subg);
     }
 
     // NOTE: we do not add return node into nodes_map, since this
@@ -1659,14 +1661,67 @@ void LLVMPointerSubgraphBuilder::addProgramStructure()
         // add the CFG edges
         addProgramStructure(F, subg);
 
-        std::set<PSNode *> cont;
-        getNodes(cont, subg.root, subg.ret, 0xdead);
-        for (PSNode* n : cont) {
-            n->setParent(subg.root);
-        }
-
         // add the missing operands (to arguments and return nodes)
         addInterproceduralOperands(F, subg);
+    }
+}
+
+void LLVMPointerSubgraphBuilder::setNodesParents(const llvm::Function *F, Subgraph& subg)
+{
+    assert(subg.root && subg.ret);
+    // entry is in it's own function subgraph
+    // and the virtual exit point too
+    subg.root->setParent(subg.root);
+    subg.ret->setParent(subg.root);
+
+    for (auto& B : *F) {
+        for (auto& I : B) {
+            auto& seq = getCorrespondingNodes(&I);
+            PSNode *cur = seq.first;
+            while(cur) {
+                cur->setParent(subg.root);
+
+                if (cur->getType() == PSNodeType::CALL) {
+                    // if this is a CallInst, we need to set parent
+                    // also to return node
+                    assert(cur->getPairedNode());
+                    assert(cur->getPairedNode()->getType() == PSNodeType::CALL_RETURN);
+                    cur->getPairedNode()->setParent(subg.root);
+                }
+
+                // after the seq.second can be also a successor
+                // (e.g. ENTRY for function calls)
+                // FIXME: fix that
+                if (cur == seq.second)
+                    break;
+
+                if (cur->successorsNum() > 0) {
+                    assert(cur->successorsNum() == 1);
+                    cur = cur->getSingleSuccessor();
+                } else {
+                    assert(cur->successorsNum() == 0);
+                    break;
+                }
+            }
+            assert(cur == seq.second);
+        }
+    }
+
+    // do the same also for arguments
+    for (auto A = F->arg_begin(), E = F->arg_end(); A != E; ++A) {
+        auto& seq = getCorrespondingNodes(&*A);
+        assert(seq.first == seq.second);
+        seq.first->setParent(subg.root);
+    }
+}
+
+void LLVMPointerSubgraphBuilder::setNodesParents()
+{
+    // form intraprocedural program structure (CFG edges)
+    for (auto& it : subgraphs_map) {
+        Subgraph& subg = it.second;
+        const llvm::Function *F = it.first;
+        setNodesParents(F, subg);
     }
 }
 
@@ -1834,8 +1889,25 @@ PSNode *LLVMPointerSubgraphBuilder::buildLLVMPointerSubgraph()
     // now we can build rest of the graph
     PSNode *root = buildFunction(*F);
 
+    // set Function entries in nodes. It must be here, so that the nodes
+    // are already created, but before adding structure, where
+    // we add all the CFG edges.
+    // We do it here, so that we do not copy the code into all create* functions
+    // FIXME: add createNode method and we can do it there along with
+    // creating nodes
+    setNodesParents();
+
+#if DEBUG_ENABLED
+    size_t nodes_num = nodes_map.size();
+#endif
+
     // fill in the CFG edges
     addProgramStructure();
+
+#if DEBUG_ENABLED
+    assert(nodes_num == nodes_map.size()
+            && "adding program structure have added some nodes");
+#endif
 
     // do we have any globals at all? If so, insert them at the begining
     // of the graph
