@@ -18,8 +18,9 @@ public:
 
     // this is an easy but not very efficient implementation,
     // works for testing
-    PointsToFlowSensitive(PointerSubgraph *ps)
-    : PointerAnalysis(ps, UNKNOWN_OFFSET, false) {}
+    PointsToFlowSensitive(PointerSubgraph *ps, uint64_t max_off = UNKNOWN_OFFSET,
+                          bool prepro_geps = false, bool invalid_nodes = false)
+    : PointerAnalysis(ps, max_off, prepro_geps, invalid_nodes) {}
 
     bool beforeProcessed(PSNode *n) override
     {
@@ -155,8 +156,7 @@ protected:
         return changed;
     }
 
-private:
-    static bool canChangeMM(PSNode *n) {
+    virtual bool canChangeMM(PSNode *n) {
         if (n->predecessorsNum() == 0 || // root node
             n->getType() == PSNodeType::STORE ||
             n->getType() == PSNodeType::MEMCPY)
@@ -165,6 +165,7 @@ private:
         return false;
     }
 
+private:
     static bool comp(const std::pair<const Pointer, MemoryObjectsSetT>& a,
                      const std::pair<const Pointer, MemoryObjectsSetT>& b) {
         return a.first.target < b.first.target;

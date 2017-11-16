@@ -21,7 +21,6 @@ extern const Pointer PointerUnknown;
 extern const Pointer PointerNull;
 extern PSNode *NULLPTR;
 extern PSNode *UNKNOWN_MEMORY;
-extern PSNode *INVALIDATED;
 
 struct Pointer
 {
@@ -48,7 +47,6 @@ struct Pointer
     bool isNull() const { return target == NULLPTR; }
     bool isUnknown() const { return target == UNKNOWN_MEMORY; };
     bool isValid() const { return !isNull() && !isUnknown(); }
-    bool isInvalidated() const { return target == INVALIDATED; }
 };
 
 using PointsToSetT = std::set<Pointer>;

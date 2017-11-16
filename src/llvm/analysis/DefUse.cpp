@@ -307,7 +307,7 @@ void LLVMDefUseAnalysis::addDataDependence(LLVMNode *node, PSNode *pts,
         if (!ptr.isValid())
             continue;
 
-        if (ptr.isInvalidated())
+        if (ptr.target->isInvalidate())
             continue;
 
         llvm::Value *llvmVal = ptr.target->getUserData<llvm::Value>();

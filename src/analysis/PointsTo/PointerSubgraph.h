@@ -67,8 +67,6 @@ enum class PSNodeType {
         // special nodes
         NULL_ADDR,
         UNKNOWN_MEM,
-        // tags memory as invalidated
-        INVALIDATED
 };
 
 class PSNode : public SubgraphNode<PSNode>
@@ -165,7 +163,6 @@ public:
                 break;
             case PSNodeType::NOOP:
             case PSNodeType::ENTRY:
-            case PSNodeType::INVALIDATED:
                 // no operands
                 break;
             case PSNodeType::CAST:
@@ -242,7 +239,11 @@ public:
 
     bool isNull() const { return type == PSNodeType::NULL_ADDR; }
     bool isUnknownMemory() const { return type == PSNodeType::UNKNOWN_MEM; }
-    bool isInvalidated() const { return type == PSNodeType::INVALIDATED; }
+
+    bool isInvalidate() const {
+        return type == PSNodeType::INVALIDATE_LOCALS ||
+               type == PSNodeType::FREE;
+    }
 
     // make this public, that's basically the only
     // reason the PointerSubgraph node exists, so don't hide it

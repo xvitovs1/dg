@@ -101,7 +101,6 @@ void printPSNodeType(enum PSNodeType type)
         ELEM(PSNodeType::UNKNOWN_MEM)
         ELEM(PSNodeType::FREE)
         ELEM(PSNodeType::INVALIDATE_LOCALS)
-        ELEM(PSNodeType::INVALIDATED)
         default:
             printf("unknown PointerSubgraph type");
     };
@@ -117,9 +116,6 @@ printName(PSNode *node, bool dot)
         name = "null";
     } else if (node->isUnknownMemory()) {
         name = "unknown";
-    } else if (node->isInvalidated() && 
-        !node->getUserData<llvm::Value>()) {
-            name = "invalidated";
     }
 
     if (!name) {
@@ -232,7 +228,7 @@ dumpPointerSubgraphData(PSNode *n, PTType type, bool dot = false)
             return;
 
         if (dot)
-            printf("\\n    Memory map: ---\\n");
+            printf("\\n    Memory map [%p]: ---\\n", mm);
         else
             printf("    Memory map: ---\n");
 
@@ -283,8 +279,10 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
     for (PSNode *node : nodes) {
         printf("\tNODE%p [label=\"", node);
         printName(node, true);
-        printf("\\n--- parent ---\\n");
-        printf("%p \\n", node->getParent());
+        if (verbose) {
+            printf("\\n--- parent ---\\n");
+            printf("%p \\n", node->getParent());
+        }
 
         if (node->getSize() || node->isHeap() || node->isZeroInitialized())
             printf("\\n[size: %lu, heap: %u, zeroed: %u]",

@@ -597,6 +597,13 @@ LLVMPointerSubgraphBuilder::createCallToFunction(const llvm::Function *F)
 
     // we took the subg by reference, so it should be filled now
     assert(subg.root && subg.ret);
+    assert(!invalidate_nodes || subg.ret->isInvalidate());
+
+    if (invalidate_nodes) {
+        // we need this information to invalidate pointer returned
+        // as a return value
+        subg.ret->setPairedNode(returnNode);
+    }
 
     // add an edge from last argument to root of the subgraph
     // and from the subprocedure return node (which is one - unified
@@ -642,7 +649,8 @@ LLVMPointerSubgraphBuilder::createOrGetSubgraph(const llvm::CallInst *CInst,
 
         addProgramStructure(F, subg);
         addInterproceduralOperands(F, subg, CInst);
-        setNodesParents(F, subg);
+        if (invalidate_nodes)
+            setNodesParents(F, subg);
     }
 
     // NOTE: we do not add return node into nodes_map, since this
@@ -1685,7 +1693,9 @@ void LLVMPointerSubgraphBuilder::setNodesParents(const llvm::Function *F, Subgra
                     // if this is a CallInst, we need to set parent
                     // also to return node
                     assert(cur->getPairedNode());
-                    assert(cur->getPairedNode()->getType() == PSNodeType::CALL_RETURN);
+                    assert(cur->getPairedNode()->getType() == PSNodeType::CALL_RETURN ||
+                           (cur->getPairedNode()->getType() == PSNodeType::CALL // call of undef. func
+                            && cur->getPairedNode() == cur));
                     cur->getPairedNode()->setParent(subg.root);
                 }
 
@@ -1895,7 +1905,8 @@ PSNode *LLVMPointerSubgraphBuilder::buildLLVMPointerSubgraph()
     // We do it here, so that we do not copy the code into all create* functions
     // FIXME: add createNode method and we can do it there along with
     // creating nodes
-    setNodesParents();
+    if (invalidate_nodes)
+        setNodesParents();
 
 #if DEBUG_ENABLED
     size_t nodes_num = nodes_map.size();

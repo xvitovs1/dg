@@ -12,8 +12,6 @@ PSNode NULLPTR_LOC(PSNodeType::NULL_ADDR);
 PSNode *NULLPTR = &NULLPTR_LOC;
 PSNode UNKNOWN_MEMLOC(PSNodeType::UNKNOWN_MEM);
 PSNode *UNKNOWN_MEMORY = &UNKNOWN_MEMLOC;
-PSNode INVALIDATED_LOC(PSNodeType::INVALIDATED);
-PSNode *INVALIDATED = &INVALIDATED_LOC;
 
 // pointers to those memory
 const Pointer PointerUnknown(UNKNOWN_MEMORY, UNKNOWN_OFFSET);
@@ -235,6 +233,9 @@ bool PointerAnalysis::processNode(PSNode *node)
 {
     bool changed = false;
     std::vector<MemoryObject *> objects;
+    std::vector<MemoryObject *> tmp_objects;
+
+    objects.reserve(4);
 
 #ifdef DEBUG_ENABLED
     size_t prev_size = node->pointsTo.size();
@@ -269,20 +270,55 @@ bool PointerAnalysis::processNode(PSNode *node)
                 if (ptr.isNull())
                     continue;
 
-                objects.clear();
-                getMemoryObjectsPointingTo(node, ptr, objects);
-                for (MemoryObject *o : objects) {
-                    changed |= o->addPointsTo(UNKNOWN_OFFSET, INVALIDATED);
+                assert(tmp_objects.empty());
+
+                // get all memory objects that point to ptr's target
+                // (which is being invalidated) and make them newly point
+                // to the FREE node, which represents that the memory
+                // was invalidated there
+
+                for (auto pred : node->getPredecessors())
+                    getMemoryObjectsPointingTo(pred, ptr, tmp_objects);
+
+                for (MemoryObject *tmpo : tmp_objects) {
+                    objects.clear();
+                    // get objects for the new variables that we will write to
+                    // we don't care about the offset since free always frees
+                    // the whole memory
+                    getMemoryObjects(node, Pointer(tmpo->node, 0), objects);
+                    // store this pointer, so that we can use this information
+                    // later when doing strong update
+                    changed |= node->addPointsTo(Pointer(tmpo->node, 0));
+
+                    for (MemoryObject *o : objects) {
+                        // we do not want the write to the same object
+                        assert(tmpo != o);
+                        changed |= o->addPointsTo(0, Pointer(node, 0));
+                    }
                 }
+
+                tmp_objects.clear();
             }
             break;
         case PSNodeType::INVALIDATE_LOCALS:
-            node->setParent(node->getOperand(0)->getSingleSuccessor()->getParent());
+            assert(tmp_objects.empty());
             objects.clear();
-            getLocalMemoryObjects(node, objects);
-            for (MemoryObject *o : objects) {
-                changed |= o->addPointsTo(UNKNOWN_OFFSET, INVALIDATED);
+
+            //asm("int3");
+            getLocalMemoryObjects(node, tmp_objects);
+            for (MemoryObject *tmpo : objects) {
+                node->addPointsTo(Pointer(tmpo->node, 0));
             }
+
+        /*
+            for (MemoryObject *o : objects) {
+
+                changed |= o->addPointsTo(0, node);
+            }
+
+            */
+            // invalidate returned arguments if needed
+
             break;
         case PSNodeType::GEP:
             for (const Pointer& ptr : node->getOperand(0)->pointsTo) {
@@ -315,22 +351,36 @@ bool PointerAnalysis::processNode(PSNode *node)
             assert(node->pointsTo.size() == 1
                    && "Constant should have exactly one pointer");
             break;
-        case PSNodeType::CALL_RETURN:
-            if (invalidate_nodes) {
-                for (PSNode *op : node->operands) {
-                    for (const Pointer& ptr : op->pointsTo) {
-                        if (!ptr.target->isHeap() && !ptr.target->isGlobal())
-                            changed |= node->addPointsTo(INVALIDATED);
-                    }
-                }
-            }
-            // fall-through
         case PSNodeType::RETURN:
             // gather pointers returned from subprocedure - the same way
             // as PHI works
         case PSNodeType::PHI:
             for (PSNode *op : node->operands)
                 changed |= node->addPointsTo(op->pointsTo);
+            break;
+        case PSNodeType::CALL_RETURN:
+            // call return works like PHI node, but when we are
+            // invalidating the nodes, it replace local addresses
+            // with invalid memory
+            if (invalidate_nodes) {
+                PSNode *invalidate_node = node->getSinglePredecessor();
+                assert(invalidate_node->getType() == PSNodeType::INVALIDATE_LOCALS);
+
+                for (PSNode *op : node->operands) {
+                  for (const Pointer& ptr : op->pointsTo) {
+                      // is it a valid (not null nor unknown) pointer to local memory in that function?
+                      if (ptr.isValid() && !ptr.target->isHeap() && !ptr.target->isGlobal()
+                          && invalidate_node->getParent() == ptr.target->getParent())
+                          changed |= node->addPointsTo(invalidate_node);
+                      else
+                          changed |= node->addPointsTo(ptr);
+                  }
+                }
+            } else {
+                // work like a PHI node
+                for (PSNode *op : node->operands)
+                    changed |= node->addPointsTo(op->pointsTo);
+            }
             break;
         case PSNodeType::CALL_FUNCPTR:
             // call via function pointer:
@@ -341,7 +391,7 @@ bool PointerAnalysis::processNode(PSNode *node)
                 if (node->addPointsTo(ptr)) {
                     changed = true;
 
-                    if (ptr.isValid() && !ptr.isInvalidated()) {
+                    if (ptr.isValid() && !ptr.target->isInvalidate()) {
                         functionPointerCall(node, ptr.target);
                     } else {
                         error(node, "Calling invalid pointer as a function!");

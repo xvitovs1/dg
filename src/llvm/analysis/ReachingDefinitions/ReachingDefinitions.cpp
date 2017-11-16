@@ -303,7 +303,7 @@ RDNode *LLVMRDBuilder::createStore(const llvm::Instruction *Inst)
             continue;
         }
 
-        if (ptr.isInvalidated())
+        if (ptr.target->isInvalidate())
             continue;
 
         const llvm::Value *ptrVal = ptr.target->getUserData<llvm::Value>();
@@ -636,7 +636,7 @@ RDNode *LLVMRDBuilder::createUndefinedCall(const llvm::CallInst *CInst)
             if (!ptr.isValid())
                 continue;
 
-            if (ptr.isInvalidated())
+            if (ptr.target->isInvalidate())
                 continue;
 
             const llvm::Value *ptrVal = ptr.target->getUserData<llvm::Value>();
@@ -700,7 +700,7 @@ RDNode *LLVMRDBuilder::createIntrinsicCall(const llvm::CallInst *CInst)
         len = C->getLimitedValue();
 
     for (const pta::Pointer& ptr : pts->pointsTo) {
-        if (!ptr.isValid() || ptr.isInvalidated())
+        if (!ptr.isValid() || ptr.target->isInvalidate())
             continue;
 
         const llvm::Value *ptrVal = ptr.target->getUserData<llvm::Value>();
@@ -791,7 +791,7 @@ LLVMRDBuilder::createCall(const llvm::Instruction *Inst)
 
         if (op->pointsTo.size() > 1) {
             for (const pta::Pointer& ptr : op->pointsTo) {
-                if (!ptr.isValid() || ptr.isInvalidated())
+                if (!ptr.isValid() || ptr.target->isInvalidate())
                     continue;
 
                 // check if it is a function (varargs may
