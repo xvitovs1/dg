@@ -84,6 +84,7 @@ public:
     bool afterProcessed(PSNode *n) override
     {
         bool changed = false;
+        PointsToSetT aux_strong_update;
         PointsToSetT *strong_update = nullptr;
 
         MemoryMapT *mm = n->getData<MemoryMapT>();
@@ -91,15 +92,34 @@ public:
         // in the beforeProcessed method
         assert(mm && "Do not have memory map");
 
+        // destroy local memory objects if this is the invalidate_locals
+        // -- we do not need them anymore
+        if (n->getType() == PSNodeType::INVALIDATE_LOCALS) {
+            for (auto IT = mm->begin(), ET = mm->end(); IT != ET;) {
+                PSNode *key_target = IT->first.target;
+                if (key_target->getParent() == n->getParent() &&
+                    !key_target->isHeap() && !key_target->isGlobal()) {
+                    auto tmp = IT++;
+                    aux_strong_update.insert(tmp->first);
+                    mm->erase(tmp);
+                } else
+                    ++IT;
+            }
+
+            for (auto& p : n->pointsTo)
+                aux_strong_update.insert(p);
+
+            strong_update = &aux_strong_update;
+        }
+
         // every store is a strong update
         // FIXME: memcpy can be strong update too
         if (n->getType() == PSNodeType::STORE)
             strong_update = &n->getOperand(1)->pointsTo;
 
         if (n->getType() == PSNodeType::FREE)
-            strong_update = &n->getOperand(0)->pointsTo;
-
-        if (n->getType() == PSNodeType::INVALIDATE_LOCALS)
+            // in this points-to we store the pointers for which the
+            // memory is invalidated
             strong_update = &n->pointsTo;
 
         // merge information from predecessors if there's
@@ -108,6 +128,8 @@ public:
         // change, so we don't have to do that)
         if (n->predecessorsNum() > 1 || strong_update
             || n->getType() == PSNodeType::MEMCPY) {
+            assert(canChangeMM(n));
+
             for (PSNode *p : n->getPredecessors()) {
                 MemoryMapT *pm = p->getData<MemoryMapT>();
                 // merge pm to mm (but only if pm was already created)
@@ -150,7 +172,8 @@ public:
             for (MemoryObject *mo : I.second) {
                 for (auto& it : mo->pointsTo) {
                     for (const auto& ptr : it.second) {
-                        if (!ptr.target->isHeap() &&
+                        if (ptr.isValid() &&
+                            !ptr.target->isHeap() &&
                             !ptr.target->isGlobal() &&
                             ptr.target->getParent() == where->getParent()) {
                             objects.push_back(mo);
