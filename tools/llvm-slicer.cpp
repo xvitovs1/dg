@@ -71,6 +71,7 @@
 
 #include "analysis/PointsTo/PointsToFlowInsensitive.h"
 #include "analysis/PointsTo/PointsToFlowSensitive.h"
+#include "analysis/PointsTo/PointsToFlowSensitiveWithoutMerge.h"
 #include "analysis/PointsTo/PointsToWithInvalidate.h"
 #include "analysis/PointsTo/Pointer.h"
 
@@ -99,7 +100,7 @@ enum {
 };
 
 enum PtaType {
-    fs, fi, inv
+    fs, fi, inv, fswm
 };
 
 llvm::cl::OptionCategory SlicingOpts("Slicer options", "");
@@ -140,14 +141,15 @@ llvm::cl::opt<bool> undefined_are_pure("undefined-are-pure",
 llvm::cl::opt<PtaType> pta("pta",
     llvm::cl::desc("Choose pointer analysis to use:"),
     llvm::cl::values(
-        clEnumVal(fi, "Flow-insensitive PTA (default)"),
+        clEnumVal(fi, "Flow-insensitive PTA"),
         clEnumVal(fs, "Flow-sensitive PTA"),
+        clEnumVal(fswm, "Flow-sensitive PTA without merge (default)"),
         clEnumVal(inv, "PTA with invalidate nodes")
 #if LLVM_VERSION_MAJOR < 4
         , nullptr
 #endif
         ),
-    llvm::cl::init(fi), llvm::cl::cat(SlicingOpts));
+    llvm::cl::init(fswm), llvm::cl::cat(SlicingOpts));
 
 llvm::cl::opt<CD_ALG> CdAlgorithm("cd-alg",
     llvm::cl::desc("Choose control dependencies algorithm to use:"),
@@ -659,8 +661,12 @@ public:
             PTA->run<analysis::pta::PointsToFlowInsensitive>();
         else if (pta == PtaType::inv)
             PTA->run<analysis::pta::PointsToWithInvalidate>();
-        else
-            assert(0 && "Wrong pointer analysis");
+        else if (pta == PtaType::fswm)
+            PTA->run<analysis::pta::PointsToFlowSensitiveWithoutMerge>();
+        else {
+            llvm::errs() << "Wrong pointer analysis\n";
+            abort();
+        }
 
         tm.stop();
         tm.report("INFO: Points-to analysis took");
