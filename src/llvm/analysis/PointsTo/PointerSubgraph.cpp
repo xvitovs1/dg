@@ -37,6 +37,12 @@
 #include "analysis/PointsTo/PointerSubgraph.h"
 #include "PointerSubgraph.h"
 
+
+    void dumpPtr(const dg::analysis::pta::Pointer& ptr) {
+        llvm::errs() << *ptr.target->getUserData<llvm::Value>() << " + " << *ptr.offset << "\n";
+    }
+
+
 namespace dg {
 namespace analysis {
 namespace pta {

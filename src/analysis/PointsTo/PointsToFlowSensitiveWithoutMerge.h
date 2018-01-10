@@ -30,10 +30,6 @@ class PointsToFlowSensitiveWithoutMerge : public PointerAnalysis
         return info[n->getID()];
     }
 
-    MemoryMapT* getMM(PSNode *n) {
-        return getData(n).memory_map;
-    }
-
     void setMM(PSNode *n, MemoryMapT *mm) {
         getData(n).memory_map = mm;
     }
@@ -49,6 +45,11 @@ public:
         info.resize(ps->size());
         memory_maps.reserve(128);
     }
+
+    MemoryMapT* getMM(PSNode *n) {
+        return getData(n).memory_map;
+    }
+
 
     static bool canChangeMM(PSNode *n) {
         if (n->predecessorsNum() == 0 || // root node
@@ -134,19 +135,45 @@ public:
         // if we do not have any definition of this memory,
         // this is because we haven't merged the states at join.
         // Look up the definitions.
-        // However, for STORE we need the same behavior as in regular FS-PTA,
-        // since it has the overwrite semantics -- that is do not lookup
-        // definition but fall through to creating new memory objects
-        if (bounds.first == bounds.second
-            && where->getType() != PSNodeType::STORE) {
-            lookupDefinitions(where, pointer, objects);
+        if (bounds.first == bounds.second) {
+            // For STORE we need the same behavior as in regular FS-PTA,
+            // since it has the overwrite semantics -- that is do not lookup
+            // definition but fall through to creating new memory objects
+            if (where->getType() != PSNodeType::STORE)
+                lookupDefinitions(where, pointer, objects);
         } else {
+            // do we still need a lookup even when we found some definitions?
+            bool do_lookup = true;
+            bool found_unknown = false;
+
             for (MemoryMapT::iterator I = bounds.first; I != bounds.second; ++I) {
                 assert(I->first.target == pointer.target
                         && "Bug in getObjectRange");
 
-                for (MemoryObject *mo : I->second)
-                    objects.push_back(mo);
+                bool is_unknown = I->first.offset.isUnknown();
+                if (pointer.offset.isUnknown()
+                    || is_unknown
+                    || I->first.offset == pointer.offset) {
+                    for (MemoryObject *mo : I->second)
+                        objects.push_back(mo);
+
+                    // if we found the definition with correct offset,
+                    // we do not need to do further lookup
+                    if (!is_unknown) {
+                        do_lookup = false;
+                    } else
+                        found_unknown = true;
+
+                    // do not break, we want to possibly find also definition
+                    // on UNKNOWN offset
+                }
+            }
+
+            // if the pointer has unknown offset, force the lookup.
+            // This is an overapprox that may be expensive, FIXME.
+            if (do_lookup || pointer.offset.isUnknown()) {
+                assert(objects.empty() || found_unknown || pointer.offset.isUnknown());
+                lookupDefinitions(where, pointer, objects);
             }
 
             assert((bounds.second == mm->end() ||
@@ -158,7 +185,6 @@ public:
         // is a write to memory, create a new one, so that
         // the write has something to write to
         if (objects.empty() && canChangeMM(where)) {
-            // FIXME: we're leaking this
             MemoryObject *mo = new MemoryObject(pointer.target);
             memory_objects.emplace_back(mo);
 
@@ -213,7 +239,7 @@ private:
         lookupDefinitionsRec(start, pointer, objects);
     }
 
-    // lookup all reaching definitions of the memory pointer to by the pointer
+    // lookup all reaching definitions of the memory pointed to by the pointer
     void lookupDefinitionsRec(PSNode *start, const Pointer& pointer,
                               std::vector<MemoryObject *>& objects) {
         for (PSNode *pred : start->getPredecessors()) {
@@ -226,6 +252,8 @@ private:
             MemoryMapT *mm = data.memory_map;
             if (!mm)
                 continue;
+
+            // FIXME:what to do with pointer.offset.isUnknown()
 
             auto it = mm->find(Pointer(pointer.target, UNKNOWN_OFFSET));
             if (it != mm->end()) {

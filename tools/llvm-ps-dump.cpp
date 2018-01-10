@@ -54,6 +54,8 @@ using llvm::errs;
 
 static bool verbose;
 
+std::unique_ptr<PointerAnalysis> PA;
+
 enum PTType {
     FLOW_SENSITIVE = 1,
     FLOW_SENSITIVE_WM,
@@ -127,10 +129,8 @@ printName(PSNode *node, bool dot)
     if (!name) {
         if (!node->getUserData<llvm::Value>()) {
             printPSNodeType(node->getType());
-            if (dot)
-                printf(" %p\\n", node);
-            else
-                printf(" %p\n", node);
+            if (!dot)
+                printf(" <%u>\n", node->getID());
 
             return;
         }
@@ -228,8 +228,12 @@ dumpPointerSubgraphData(PSNode *n, PTType type, bool dot = false)
         if (!dot)
             printf("    -----------\n");
     } else {
-        PointsToFlowSensitive::MemoryMapT *mm
-            = n->getData<PointsToFlowSensitive::MemoryMapT>();
+        PointsToFlowSensitive::MemoryMapT *mm;
+
+        if (type == FLOW_SENSITIVE)
+            mm = n->getData<PointsToFlowSensitive::MemoryMapT>();
+        else if (type == FLOW_SENSITIVE_WM)
+            mm = static_cast<PointsToFlowSensitiveWithoutMerge *>(PA.get())->getMM(n);
         if (!mm)
             return;
 
@@ -248,7 +252,7 @@ dumpPointerSubgraphData(PSNode *n, PTType type, bool dot = false)
 static void
 dumpPSNode(PSNode *n, PTType type)
 {
-    printf("NODE: ");
+    printf("NODE %3u: ", n->getID());
     printName(n, false);
 
     if (n->getSize() || n->isHeap() || n->isZeroInitialized())
@@ -283,7 +287,7 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
     /* dump nodes */
     const auto& nodes = pta->getNodes();
     for (PSNode *node : nodes) {
-        printf("\tNODE%p [label=\"", node);
+        printf("\tNODE%p [label=\"<%u> ", node, node->getID());
         printName(node, true);
         printf("\\n--- parent ---\\n");
         printf("%p \\n", node->getParent());
@@ -405,7 +409,6 @@ int main(int argc, char *argv[])
     debug::TimeMeasure tm;
 
     LLVMPointerAnalysis PTA(M, field_senitivity);
-    std::unique_ptr<PointerAnalysis> PA;
 
     tm.start();
 
