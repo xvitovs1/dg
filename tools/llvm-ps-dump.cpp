@@ -228,7 +228,7 @@ dumpPointerSubgraphData(PSNode *n, PTType type, bool dot = false)
         if (!dot)
             printf("    -----------\n");
     } else {
-        PointsToFlowSensitive::MemoryMapT *mm;
+        PointsToFlowSensitive::MemoryMapT *mm = nullptr;
 
         if (type == FLOW_SENSITIVE)
             mm = n->getData<PointsToFlowSensitive::MemoryMapT>();
