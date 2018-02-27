@@ -384,7 +384,7 @@ int main(int argc, char *argv[])
             else if (strcmp(argv[i+1], "inv") == 0)
                 type = WITH_INVALIDATE;
         } else if (strcmp(argv[i], "-pta-field-sensitive") == 0) {
-            field_senitivity = (uint64_t) atoll(argv[i + 1]);
+            field_senitivity = static_cast<uint64_t>(atoll(argv[i + 1]));
         } else if (strcmp(argv[i], "-dot") == 0) {
             todot = true;
         } else if (strcmp(argv[i], "-v") == 0) {

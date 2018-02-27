@@ -230,27 +230,27 @@ public:
     }
 
     // control dependency edges iterators
-    control_iterator control_begin(void) { return controlDepEdges.begin(); }
+    control_iterator control_begin() { return controlDepEdges.begin(); }
     const_control_iterator control_begin(void) const { return controlDepEdges.begin(); }
-    control_iterator control_end(void) { return controlDepEdges.end(); }
+    control_iterator control_end() { return controlDepEdges.end(); }
     const_control_iterator control_end(void) const { return controlDepEdges.end(); }
 
     // reverse control dependency edges iterators
-    control_iterator rev_control_begin(void) { return revControlDepEdges.begin(); }
+    control_iterator rev_control_begin() { return revControlDepEdges.begin(); }
     const_control_iterator rev_control_begin(void) const { return revControlDepEdges.begin(); }
-    control_iterator rev_control_end(void) { return revControlDepEdges.end(); }
+    control_iterator rev_control_end() { return revControlDepEdges.end(); }
     const_control_iterator rev_control_end(void) const { return revControlDepEdges.end(); }
 
     // data dependency edges iterators
-    data_iterator data_begin(void) { return dataDepEdges.begin(); }
+    data_iterator data_begin() { return dataDepEdges.begin(); }
     const_data_iterator data_begin(void) const { return dataDepEdges.begin(); }
-    data_iterator data_end(void) { return dataDepEdges.end(); }
+    data_iterator data_end() { return dataDepEdges.end(); }
     const_data_iterator data_end(void) const { return dataDepEdges.end(); }
 
     // reverse data dependency edges iterators
-    data_iterator rev_data_begin(void) { return revDataDepEdges.begin(); }
+    data_iterator rev_data_begin() { return revDataDepEdges.begin(); }
     const_data_iterator rev_data_begin(void) const { return revDataDepEdges.begin(); }
-    data_iterator rev_data_end(void) { return revDataDepEdges.end(); }
+    data_iterator rev_data_end() { return revDataDepEdges.end(); }
     const_data_iterator rev_data_end(void) const { return revDataDepEdges.end(); }
 
     unsigned int getControlDependenciesNum() const { return controlDepEdges.size(); }
@@ -299,7 +299,7 @@ public:
         return old;
     }
 
-    const std::set<DependenceGraphT *>& getSubgraphs(void) const
+    const std::set<DependenceGraphT *>& getSubgraphs() const
     {
         return subgraphs;
     }

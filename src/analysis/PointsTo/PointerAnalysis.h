@@ -21,7 +21,7 @@ extern PSNode *UNKNOWN_MEMORY;
 class PointerAnalysis
 {
     // the pointer state subgraph
-    PointerSubgraph *PS;
+    PointerSubgraph *PS{nullptr};
 
     // strongly connected components of the PointerSubgraph
     std::vector<std::vector<PSNode *> > SCCs;
@@ -29,13 +29,13 @@ class PointerAnalysis
     // Maximal offset that we want to keep
     // within a pointer.
     // Default is unconstrained (UNKNOWN_OFFSET)
-    uint64_t max_offset;
+    uint64_t max_offset = UNKNOWN_OFFSET;
 
     // Flow sensitive flag (contol loop optimization execution)
-    bool preprocess_geps;
+    bool preprocess_geps{true};
 
     // Invalidate flag
-    bool invalidate_nodes;
+    bool invalidate_nodes{false};
 
 protected:
     // a set of changed nodes that are going to be
@@ -44,8 +44,7 @@ protected:
     std::vector<PSNode *> changed;
 
     // protected constructor for child classes
-    PointerAnalysis() : PS(nullptr), max_offset(UNKNOWN_OFFSET),
-                         preprocess_geps(true), invalidate_nodes(false) {}
+    PointerAnalysis() = default;
 
 public:
     PointerAnalysis(PointerSubgraph *ps,
@@ -62,7 +61,7 @@ public:
         }
     }
 
-    virtual ~PointerAnalysis() {}
+    virtual ~PointerAnalysis() = default;
 
     // takes a PSNode 'where' and 'what' and reference to a vector
     // and fills into the vector the objects that are relevant

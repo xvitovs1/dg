@@ -27,6 +27,6 @@ public:
     bool verify();
 };
 
-}
+}  // namespace dg
 
 #endif // _LLVM_DG_VERIFIER_H_

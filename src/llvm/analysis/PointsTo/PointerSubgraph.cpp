@@ -60,7 +60,7 @@ static uint64_t getConstantValue(const llvm::Value *op)
         size = C->getLimitedValue();
         // if the size cannot be expressed as an uint64_t,
         // just set it to 0 (that means unknown)
-        if (size == ~((uint64_t) 0))
+        if (size == ~(static_cast<uint64_t>(0)))
             size = 0;
     }
 
@@ -161,7 +161,7 @@ Pointer LLVMPointerSubgraphBuilder::handleConstantAdd(const llvm::Instruction *I
 
     Pointer ptr = *op->pointsTo.begin();
     if (off)
-        return Pointer(ptr.target, *ptr.offset + off);
+        return {ptr.target, *ptr.offset + off};
     else
         return Pointer(ptr.target, UNKNOWN_OFFSET);
 }
@@ -190,7 +190,7 @@ Pointer LLVMPointerSubgraphBuilder::handleConstantArithmetic(const llvm::Instruc
            && "Constant add with not only one pointer");
 
     Pointer ptr = *op->pointsTo.begin();
-    return Pointer(ptr.target, UNKNOWN_OFFSET);
+    return {ptr.target, UNKNOWN_OFFSET};
 }
 
 Pointer LLVMPointerSubgraphBuilder::handleConstantBitCast(const llvm::BitCastInst *BC)

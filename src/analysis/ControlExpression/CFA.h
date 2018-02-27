@@ -359,7 +359,7 @@ public:
         CENode *expr = root.getSuccessors().begin()->second;
         expr->simplify();
 
-        return ControlExpression(expr);
+        return {expr};
     }
 };
 

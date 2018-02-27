@@ -58,7 +58,7 @@ public:
 
     BBlockBFS<NodeT>(uint32_t fl = 0)
         : BBlockWalk<NodeT, QueueFIFO<BBlock<NodeT> *>>(convertBFSBBFlags(fl)),
-          bfsorder(0), flags(fl) {}
+          flags(fl) {}
 
     template <typename FuncT, typename DataT>
     void run(BBlockPtrT entry, FuncT func, DataT data)
@@ -75,14 +75,14 @@ public:
     uint32_t getFlags() const { return flags; }
 protected:
     /* virtual */
-    void prepare(BBlockPtrT BB)
+    void prepare(BBlockPtrT BB) override
     {
         // set bfs order number
         AnalysesAuxiliaryData& aad = this->getAnalysisData(BB);
         aad.bfsorder = ++bfsorder;
     }
 private:
-    unsigned int bfsorder;
+    unsigned int bfsorder{0};
     uint32_t flags;
 };
 #endif // ENABLE_CFG

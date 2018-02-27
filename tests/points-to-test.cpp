@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -908,7 +908,7 @@ public:
         check(L3->doesPointsTo(NULLPTR), "L3 does not point to NULL");
     }
 
-    void test()
+    void test() override
     {
         store_load();
         store_load2();
@@ -978,7 +978,7 @@ public:
         check(N2->addPointsTo(N1, 3) == false);
     }
 
-    void test()
+    void test() override
     {
         unknown_offset1();
     }
@@ -987,7 +987,7 @@ public:
 }; // namespace tests
 }; // namespace dg
 
-int main(void)
+int main()
 {
     using namespace dg::tests;
     TestRunner Runner;

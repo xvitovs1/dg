@@ -14,7 +14,7 @@ enum class MemAllocationFuncs {
 };
 
 MemAllocationFuncs getMemAllocationFunc(const llvm::Function *func);
-}
+}  // namespace dg
 
 
 #endif // _DG_MEMALLOCATIONFUNCS_H_

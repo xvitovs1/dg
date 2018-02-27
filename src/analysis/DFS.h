@@ -122,7 +122,7 @@ public:
 
     BBlockDFS<NodeT>(uint32_t fl = DFS_BB_CFG)
         : BBlockWalk<NodeT, QueueLIFO<BBlock<NodeT> *>>(convertBBFlags(fl)),
-          dfsorder(0), flags(fl) {}
+          flags(fl) {}
 
     template <typename FuncT, typename DataT>
     void run(BBlockPtrT entry, FuncT func, DataT data)
@@ -139,14 +139,14 @@ public:
     uint32_t getFlags() const { return flags; }
 protected:
     /* virtual */
-    void prepare(BBlockPtrT BB)
+    void prepare(BBlockPtrT BB) override
     {
         // set dfs order number
         AnalysesAuxiliaryData& aad = this->getAnalysisData(BB);
         aad.dfsorder = ++dfsorder;
     }
 private:
-    unsigned int dfsorder;
+    unsigned int dfsorder{0};
     uint32_t flags;
 };
 #endif // ENABLE_CFG

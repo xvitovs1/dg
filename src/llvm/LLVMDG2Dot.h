@@ -74,17 +74,17 @@ public:
     // FIXME: make dg const
     LLVMDG2Dot(LLVMDependenceGraph *dg,
                uint32_t opts = debug::PRINT_CFG | debug::PRINT_DD | debug::PRINT_CD,
-               const char *file = NULL)
+               const char *file = nullptr)
         : debug::DG2Dot<LLVMNode>(dg, opts, file) {}
 
     /* virtual */
-    std::ostream& printKey(std::ostream& os, llvm::Value *val)
+    std::ostream& printKey(std::ostream& os, llvm::Value *val) override
     {
         return printLLVMVal(os, val);
     }
 
     /* virtual */
-    bool checkNode(std::ostream& os, LLVMNode *node)
+    bool checkNode(std::ostream& os, LLVMNode *node) override
     {
         bool err = false;
         const llvm::Value *val = node->getKey();
@@ -153,7 +153,7 @@ public:
     }
 
     bool dump(const char *new_file = nullptr,
-              const char *dump_func_only = nullptr)
+              const char *dump_func_only = nullptr) override
     {
         // make sure we have the file opened
         if (!ensureFile(new_file))
@@ -200,7 +200,7 @@ public:
 
     LLVMDGDumpBlocks(LLVMDependenceGraph *dg,
                   uint32_t opts = debug::PRINT_CFG | debug::PRINT_DD | debug::PRINT_CD,
-                  const char *file = NULL)
+                  const char *file = nullptr)
         : debug::DG2Dot<LLVMNode>(dg, opts, file) {}
 
     /* virtual
@@ -211,13 +211,13 @@ public:
     */
 
     /* virtual */
-    bool checkNode(std::ostream&, LLVMNode *)
+    bool checkNode(std::ostream&, LLVMNode *) override
     {
         return false; // no error
     }
 
     bool dump(const char *new_file = nullptr,
-              const char *dump_func_only = nullptr)
+              const char *dump_func_only = nullptr) override
     {
         // make sure we have the file opened
         if (!ensureFile(new_file))
@@ -300,7 +300,7 @@ private:
     {
         for (const LLVMBBlock::BBlockEdge& edge : blk->successors()) {
             out << "NODE" << blk << " -> NODE" << edge.target
-                << " [penwidth=2 label=\""<< (int) edge.label << "\"] \n";
+                << " [penwidth=2 label=\""<< static_cast<int>(edge.label) << "\"] \n";
         }
 
         for (const LLVMBBlock *pdf : blk->controlDependence()) {

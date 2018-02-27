@@ -35,7 +35,7 @@ public:
     ~LLVMDefUseAnalysis() { delete DL; }
 
     /* virtual */
-    bool runOnNode(LLVMNode *node, LLVMNode *prev);
+    bool runOnNode(LLVMNode *node, LLVMNode *prev) override;
 private:
     void addDataDependence(LLVMNode *node,
                            analysis::pta::PSNode *pts,

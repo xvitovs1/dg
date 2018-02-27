@@ -21,7 +21,7 @@ struct Offset
             return UNKNOWN_OFFSET;
         }
 
-        return Offset(offset + o.offset);
+        return {offset + o.offset};
     }
 
     Offset operator-(const Offset o)
@@ -31,7 +31,7 @@ struct Offset
             return UNKNOWN_OFFSET;
         }
 
-        return Offset(offset + o.offset);
+        return {offset + o.offset};
     }
 
     bool operator<(const Offset& o) const

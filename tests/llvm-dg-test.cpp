@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 
@@ -14,7 +14,7 @@ struct TestRefcount : public Test
 {
     TestRefcount() : Test("reference counting test") {}
 
-    void test()
+    void test() override
     {
         LLVMDependenceGraph d;
         LLVMDependenceGraph s;
@@ -55,10 +55,10 @@ struct TestRefcount : public Test
     }
 };
 
-}
-}
+}  // namespace tests
+}  // namespace dg
 
-int main(void)
+int main()
 {
     using namespace dg::tests;
 

@@ -57,7 +57,7 @@ static void dropAllUses(Val *V)
 class LLVMSlicer : public analysis::Slicer<LLVMNode>
 {
 public:
-    LLVMSlicer(){}
+    LLVMSlicer()= default;
 
     void keepFunctionUntouched(const char *n)
     {
@@ -65,7 +65,7 @@ public:
     }
 
     /* virtual */
-    bool removeNode(LLVMNode *node)
+    bool removeNode(LLVMNode *node) override
     {
         using namespace llvm;
 
@@ -87,7 +87,7 @@ public:
     }
 
     /* virtual */
-    void removeBlock(LLVMBBlock *block)
+    void removeBlock(LLVMBBlock *block) override
     {
         assert(block);
 

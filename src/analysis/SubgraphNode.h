@@ -251,6 +251,6 @@ public:
     }
 };
 
-} // analysis
-} // dg
+}  // namespace analysis
+}  // namespace dg
 #endif // _SUBGRAPH_NODE_H_

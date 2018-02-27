@@ -21,7 +21,7 @@ enum dg2dot_options {
     PRINT_REV_CD    = 1 << 5,
     PRINT_CALL      = 1 << 6,
     PRINT_POSTDOM   = 1 << 7,
-    PRINT_ALL       = ~((uint32_t) 0)
+    PRINT_ALL       = ~(static_cast<uint32_t>(0))
 };
 
 struct Indent
@@ -48,7 +48,7 @@ public:
 
     DG2Dot<NodeT>(DependenceGraph<NodeT> *dg,
                   uint32_t opts = PRINT_CFG | PRINT_DD | PRINT_CD,
-                  const char *file = NULL)
+                  const char *file = nullptr)
         : options(opts), dg(dg), file(file)
     {
         // if a graph has no global nodes, this will forbid trying to print them
@@ -582,7 +582,7 @@ protected:
     std::ofstream out;
 };
 
-} // debug
+}  // namespace debug
 } // namespace dg
 
 #endif // DG_2_DOT_H_

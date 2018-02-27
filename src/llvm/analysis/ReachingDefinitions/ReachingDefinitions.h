@@ -25,10 +25,10 @@ class LLVMRDBuilder
     struct Subgraph {
         Subgraph(RDNode *r1, RDNode *r2)
             : root(r1), ret(r2) {}
-        Subgraph(): root(nullptr), ret(nullptr) {}
+        Subgraph() = default;
 
-        RDNode *root;
-        RDNode *ret;
+        RDNode *root{nullptr};
+        RDNode *ret{nullptr};
     };
 
     // points-to information
@@ -136,7 +136,7 @@ class LLVMReachingDefinitions
 {
     std::unique_ptr<LLVMRDBuilder> builder;
     std::unique_ptr<ReachingDefinitionsAnalysis> RDA;
-    RDNode *root;
+    RDNode *root{};
     bool strong_update_unknown;
     uint32_t max_set_size;
 
@@ -145,7 +145,7 @@ public:
                             dg::LLVMPointerAnalysis *pta,
                             bool strong_updt_unknown = false,
                             bool pure_funs = false,
-                            uint32_t max_set_sz = ~((uint32_t) 0))
+                            uint32_t max_set_sz = ~(static_cast<uint32_t>(0)))
         : builder(std::unique_ptr<LLVMRDBuilder>(new LLVMRDBuilder(m, pta, pure_funs))),
           strong_update_unknown(strong_updt_unknown), max_set_size(max_set_sz) {}
 
@@ -197,7 +197,7 @@ public:
 
 
 } // namespace rd
-} // namespace dg
-} // namespace analysis
+}  // namespace analysis
+}  // namespace dg
 
 #endif

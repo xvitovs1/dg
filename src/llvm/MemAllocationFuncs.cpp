@@ -21,4 +21,4 @@ MemAllocationFuncs getMemAllocationFunc(const llvm::Function *func)
 
     return MemAllocationFuncs::NONEMEM;
 }
-}
+}  // namespace dg

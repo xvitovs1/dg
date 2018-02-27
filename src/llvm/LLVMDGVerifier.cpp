@@ -128,4 +128,4 @@ void LLVMDGVerifier::checkGraph(llvm::Function *F, LLVMDependenceGraph *g)
     }
 }
 
-};
+}  // namespace dg;

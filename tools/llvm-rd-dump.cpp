@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
     const char *module = nullptr;
     uint64_t field_senitivity = UNKNOWN_OFFSET;
     bool rd_strong_update_unknown = false;
-    uint32_t max_set_size = ~((uint32_t) 0);
+    uint32_t max_set_size = ~(static_cast<uint32_t>(0));
 
     enum {
         FLOW_SENSITIVE = 1,
@@ -291,9 +291,9 @@ int main(int argc, char *argv[])
             if (strcmp(argv[i+1], "fs") == 0)
                 type = FLOW_SENSITIVE;
         } else if (strcmp(argv[i], "-pta-field-sensitive") == 0) {
-            field_senitivity = (uint64_t) atoll(argv[i + 1]);
+            field_senitivity = static_cast<uint64_t>(atoll(argv[i + 1]));
         } else if (strcmp(argv[i], "-rd-max-set-size") == 0) {
-            max_set_size = (uint64_t) atoll(argv[i + 1]);
+            max_set_size = static_cast<uint64_t>(atoll(argv[i + 1]));
             if (max_set_size == 0) {
                 llvm::errs() << "Invalid -rd-max-set-size argument\n";
                 abort();

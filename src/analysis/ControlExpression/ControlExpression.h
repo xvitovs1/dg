@@ -14,16 +14,13 @@ namespace dg {
 
 //template <typename T>
 class ControlExpression {
-    CENode *root;
+    CENode *root{nullptr};
 
 public:
     using CEPath = std::vector<CENode *>;
 
-    ControlExpression(CENode *r)
-        : root(r) {}
-
-    ControlExpression()
-        :root(nullptr) {}
+    ControlExpression(CENode *r) : root(r) {}
+    ControlExpression() = default;
 
     ControlExpression(ControlExpression&& oth)
         :root(oth.root)
@@ -39,11 +36,6 @@ public:
     }
 
     ControlExpression(const ControlExpression& oth) = delete;
-    /*
-        : root(oth.root->clone())
-    {
-    }
-    */
 
     CENode *getRoot()
     {
@@ -88,7 +80,7 @@ public:
                 // every loop may non-terminate, so every loop terminates a path
                 if ((*I)->isa(CENodeType::LOOP))
                     // copy the path that is terminated with this loop
-                    paths.push_back(CEPath(P));
+                    paths.emplace_back(P);
 
                 // continue building the path
             }

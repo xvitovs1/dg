@@ -1,11 +1,12 @@
 #ifndef _TEST_RUNNER_H_
 #define _TEST_RUNNER_H_
 
+#include <utility>
 #include <vector>
 #include <string>
 #include <cstdio>
 #include <unistd.h>
-#include <stdarg.h>
+#include <cstdarg>
 #include <cstring>
 
 namespace dg {
@@ -28,11 +29,11 @@ class Test
     }
 
 public:
-    Test(const std::string& name)
-        :name(name), failed(0)
+    Test(std::string  name)
+        :name(std::move(name)), failed(0)
     {}
 
-    virtual ~Test() {}
+    virtual ~Test() = default;
 
     virtual void test() = 0;
 
@@ -76,12 +77,12 @@ public:
 class TestRunner
 {
     std::vector<Test *> tests;
-    unsigned int failed;
+    unsigned int failed{0};
 
     bool istty;
 
 public:
-    TestRunner() : failed(0)
+    TestRunner()
     {
         istty = isatty(fileno(stdout));
     }

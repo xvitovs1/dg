@@ -49,11 +49,10 @@ class LLVMDependenceGraph : public DependenceGraph<LLVMNode>
     // our artificial unified exit block
     std::unique_ptr<LLVMBBlock> unifiedExitBB;
 public:
-    LLVMDependenceGraph()
-        : gather_callsites(nullptr), module(nullptr), PTA(nullptr) {}
+    LLVMDependenceGraph() = default;
 
     // free all allocated memory and unref subgraphs
-    ~LLVMDependenceGraph();
+    ~LLVMDependenceGraph() override;
 
     // build a DependenceGraph from module. This method will
     // build all subgraphs (called procedures). If entry is nullptr,
@@ -118,7 +117,7 @@ public:
     bool verify() const;
 
     /* virtual */
-    void setSlice(uint64_t sid)
+    void setSlice(uint64_t sid) override
     {
         DependenceGraph<LLVMNode>::setSlice(sid);
         LLVMNode *entry = getEntry();
@@ -152,8 +151,8 @@ private:
 
     // gather call-sites of functions with given name
     // when building the graph
-    std::set<LLVMNode *> *gatheredCallsites;
-    const char *gather_callsites;
+    std::set<LLVMNode *> *gatheredCallsites{};
+    const char *gather_callsites{nullptr};
 
     // all callnodes in this graph - forming call graph
     std::set<LLVMNode *> callNodes;
@@ -161,10 +160,10 @@ private:
     // when we want to slice according to some criterion,
     // we may gather the call-sites (good points for criterions)
     // while building the graph
-    llvm::Module *module;
+    llvm::Module *module{nullptr};
 
     // points-to information (if available)
-    LLVMPointerAnalysis *PTA;
+    LLVMPointerAnalysis *PTA{nullptr};
 
     // control expression for this graph
     ControlExpression CE;

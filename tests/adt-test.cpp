@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 
@@ -18,7 +18,7 @@ public:
     TestLIFO() : Test("LIFO test")
     {}
 
-    void test()
+    void test() override
     {
         QueueLIFO<int> queue;
         check(queue.empty(), "empty queue not empty");
@@ -44,7 +44,7 @@ public:
     TestFIFO() : Test("FIFO test")
     {}
 
-    void test()
+    void test() override
     {
         QueueFIFO<int> queue;
         check(queue.empty(), "empty queue not empty");
@@ -78,7 +78,7 @@ public:
     TestPrioritySet() : Test("test priority set")
     {}
 
-    void test()
+    void test() override
     {
         PrioritySet<int, mycomp> queue;
         check(queue.empty(), "empty queue not empty");
@@ -106,7 +106,7 @@ public:
     TestIntervalsHandling() : Test("test intervals handling")
     {}
 
-    void test()
+    void test() override
     {
         using namespace analysis::rd;
 

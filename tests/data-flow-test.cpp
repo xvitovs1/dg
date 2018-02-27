@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 
@@ -18,7 +18,7 @@ public:
           run_on_node(ron) {}
 
     /* virtual */
-    bool runOnNode(TestNode *n, TestNode *prev)
+    bool runOnNode(TestNode *n, TestNode *prev) override
     {
         (void) prev;
         return run_on_node(n);
@@ -34,7 +34,7 @@ public:
     TestDataFlow() : Test("data flow analysis test")
     {}
 
-    void test()
+    void test() override
     {
         run_nums_test();
         run_nums_test_interproc();
@@ -45,7 +45,7 @@ public:
         assert(nodes_num > 0);
         TestDG *d = new TestDG();
 
-        TestBBlock *B;
+        TestBBlock *B{nullptr};
         TestNode **nodes = new TestNode *[nodes_num];
 
         for (unsigned int i = 0; i < nodes_num; ++i) {
@@ -297,7 +297,7 @@ public:
 }; // namespace tests
 }; // namespace dg
 
-int main(void)
+int main()
 {
     using namespace dg::tests;
     TestRunner Runner;

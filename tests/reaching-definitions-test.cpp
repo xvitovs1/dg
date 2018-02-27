@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -237,7 +237,7 @@ public:
         //dumpMap(&S2);
     }
 
-    void test()
+    void test() override
     {
         basic1();
         basic2();
@@ -249,7 +249,7 @@ public:
 }; // namespace tests
 }; // namespace dg
 
-int main(void)
+int main()
 {
     using namespace dg::tests;
     TestRunner Runner;

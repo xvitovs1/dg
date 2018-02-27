@@ -46,8 +46,8 @@ public:
 
 private:
     // entry and exit nodes of the graph
-    NodeT *entryNode;
-    NodeT *exitNode;
+    NodeT *entryNode{nullptr};
+    NodeT *exitNode{nullptr};
 
     // Formal parameters of the graph. Every graph is a graph of some function
     // and formal parameters are parameters from its prototype, i. e. for
@@ -56,16 +56,16 @@ private:
     // the actual parameters are '3' and 'x'.
     // Actual parameters are stored in the call node.
     // Graph can have none or one formal parameters.
-    DGParameters<NodeT> *formalParameters;
+    DGParameters<NodeT> *formalParameters{nullptr};
 
     // call-sites (nodes) that are calling this graph
     DGContainer<NodeT *> callers;
 
     // how many nodes keeps pointer to this graph?
-    int refcount;
+    int refcount{1};
 
     // is the graph in some slice?
-    uint64_t slice_id;
+    uint64_t slice_id{0};
 
 #ifdef ENABLE_CFG
     // blocks contained in this graph
@@ -73,11 +73,11 @@ private:
 
     // if we want to keep CFG information in the dependence graph,
     // these are entry and exit basic blocks
-    BBlock<NodeT> *entryBB;
-    BBlock<NodeT> *exitBB;
+    BBlock<NodeT> *entryBB{nullptr};
+    BBlock<NodeT> *exitBB{nullptr};
 
     // root of post-dominator tree
-    BBlock<NodeT> *PDTreeRoot;
+    BBlock<NodeT> *PDTreeRoot{nullptr};
 #endif // ENABLE_CFG
 
 protected:
@@ -89,14 +89,7 @@ protected:
     std::shared_ptr<ContainerType> global_nodes;
 
 public:
-    DependenceGraph<NodeT>()
-        : entryNode(nullptr), exitNode(nullptr), formalParameters(nullptr),
-          refcount(1), slice_id(0)
-#ifdef ENABLE_CFG
-        , entryBB(nullptr), exitBB(nullptr), PDTreeRoot(nullptr)
-#endif
-    {
-    }
+    DependenceGraph<NodeT>() = default;
 
     virtual ~DependenceGraph<NodeT>() {
 #ifdef ENABLE_CFG
@@ -122,10 +115,10 @@ public:
     }
 
     // iterators for local nodes
-    iterator begin(void) { return nodes.begin(); }
-    const_iterator begin(void) const { return nodes.begin(); }
-    iterator end(void) { return nodes.end(); }
-    const_iterator end(void) const { return nodes.end(); }
+    iterator begin() { return nodes.begin(); }
+    const_iterator begin() const { return nodes.begin(); }
+    iterator end() { return nodes.end(); }
+    const_iterator end() const { return nodes.end(); }
 
     // operator [] for local nodes
     NodeT *operator[](KeyT k) { return nodes[k]; }
@@ -206,8 +199,8 @@ public:
         return oldExt;
     }
 
-    NodeT *getEntry(void) const { return entryNode; }
-    NodeT *getExit(void) const { return exitNode; }
+    NodeT *getEntry() const { return entryNode; }
+    NodeT *getExit() const { return exitNode; }
 
     // dependence graph can be shared between more call-sites that
     // has references to this graph. When destroying graph, we

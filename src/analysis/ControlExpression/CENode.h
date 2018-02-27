@@ -62,7 +62,7 @@ protected:
 
 public:
     class path_iterator {
-        CENode *node;
+        CENode *node{nullptr};
 
         // iterator to the container that contains
         // this node. The invariant is that *it == node
@@ -121,10 +121,7 @@ public:
             node = nd;
         }
 
-        path_iterator()
-            : node(nullptr)
-        {
-        }
+        path_iterator() = default;
 
         bool operator==(const path_iterator& oth) const
         {
@@ -157,7 +154,7 @@ public:
             return *this;
         }
 
-        path_iterator operator++(int)
+        const path_iterator operator++(int)
         {
             path_iterator tmp = *this;
             operator++();
@@ -177,12 +174,12 @@ public:
 
     path_iterator path_begin()
     {
-        return path_iterator(this);
+        return {this};
     }
 
     path_iterator path_end()
     {
-        return path_iterator();
+        return {};
     }
 
     virtual ~CENode()
@@ -381,18 +378,17 @@ public:
         // we'll create new container
         // and then we swap the contents
         std::list<CENode *> new_children;
-        for (auto I = children.begin(), E = children.end();
-             I != E; ++I) {
+        for (auto& I : children) {
             // if this node is a SEQ node
             // and it has a child also SEQ,
             // just merge the child SEQ into
             // this node. Also, if this is a loop and
             // it contains SEQ, we can make the SEQ
             // just a children of the loop
-            if ((*I)->type == CENodeType::SEQ &&
+            if (I->type == CENodeType::SEQ &&
                 (type == CENodeType::SEQ || type == CENodeType::LOOP)) {
                     // we over-take the children,
-                    for (CENode *chld : (*I)->children) {
+                    for (CENode *chld : I->children) {
                         new_children.push_back(chld);
                         // set the new parent
                         chld->parent = this;
@@ -400,14 +396,14 @@ public:
                     // we over-took the children
                     // so clear the container, so that we won't
                     // delete the memory twice
-                    (*I)->children.clear();
+                    I->children.clear();
 
                     // now we can delete the memory
-                    delete *I;
-            } else if ((*I)->type == CENodeType::SEQ && (*I)->children.size() == 1) {
+                    delete I;
+            } else if (I->type == CENodeType::SEQ && I->children.size() == 1) {
                     // eliminate sequence when there is only one node in it
 
-                    CENode *chld = *((*I)->children.begin());
+                    CENode *chld = *(I->children.begin());
                     new_children.push_back(chld);
                     // set the new parent
                     chld->parent = this;
@@ -415,20 +411,20 @@ public:
                     // we over-took the child
                     // so clear the container, so that we won't
                     // delete the memory twice
-                    (*I)->children.clear();
+                    I->children.clear();
 
                     // now we can delete the memory
-                    delete *I;
-            } else if (type == CENodeType::SEQ && (*I)->type == CENodeType::EPS) {
+                    delete I;
+            } else if (type == CENodeType::SEQ && I->type == CENodeType::EPS) {
                 // skip epsilons in SEQuences
                 // (and since we drop the pointer,
                 // release the memory)
-                delete *I;
+                delete I;
                 continue;
             } else {
                 // no change? so just copy the child
                 assert((*I)->parent == this);
-                new_children.push_back(*I);
+                new_children.push_back(I);
             }
         }
 
@@ -470,7 +466,7 @@ public:
         return label;
     }
 
-    virtual bool lt(const CENode *n) const override
+    bool lt(const CENode *n) const override
     {
         if (n->isa(CENodeType::LABEL))
             return label < static_cast<const CELabel<T> *>(n)->label;
@@ -478,7 +474,7 @@ public:
             return this < n;
     }
 
-    virtual CENode *clone() const override
+    CENode *clone() const override
     {
         assert(!hasChildren() && "A label has children");
 
@@ -489,7 +485,7 @@ public:
         return n;
     }
 
-    virtual void computeSets() override
+    void computeSets() override
     {
         assert(!hasChildren() && "A label has children, whata?");
         assert(alwaysVisits.empty());
@@ -519,7 +515,7 @@ class CESeq: public CESymbol {
 public:
     CESeq(): CESymbol(CENodeType::SEQ) {}
 
-    virtual CENode *clone() const override
+    CENode *clone() const override
     {
         CENode *n = new CESeq(*this);
         n->setParent(nullptr);
@@ -527,7 +523,7 @@ public:
         return n;
     }
 
-    virtual void computeSets() override
+    void computeSets() override
     {
         assert(alwaysVisits.empty());
         assert(sometimesVisits.empty());
@@ -560,7 +556,7 @@ class CEBranch: public CESymbol {
 public:
     CEBranch(): CESymbol(CENodeType::BRANCH) {}
 
-    virtual CENode *clone() const override
+    CENode *clone() const override
     {
         CENode *n = new CEBranch(*this);
         n->setParent(nullptr);
@@ -568,7 +564,7 @@ public:
         return n;
     }
 
-    virtual void computeSets() override
+    void computeSets() override
     {
         assert(alwaysVisits.empty());
         assert(sometimesVisits.empty());
@@ -618,7 +614,7 @@ class CELoop: public CESymbol {
 public:
     CELoop(): CESymbol(CENodeType::LOOP) {}
 
-    virtual CENode *clone() const override
+    CENode *clone() const override
     {
         CENode *n = new CELoop(*this);
         n->setParent(nullptr);
@@ -626,7 +622,7 @@ public:
         return n;
     }
 
-    virtual void computeSets() override
+    void computeSets() override
     {
         assert(alwaysVisits.empty());
         assert(sometimesVisits.empty());
@@ -657,7 +653,7 @@ class CEEps: public CESymbol {
 public:
     CEEps(): CESymbol(CENodeType::EPS) {}
 
-    virtual CENode *clone() const override
+    CENode *clone() const override
     {
         // we do not have children,
         // make a shallow copy

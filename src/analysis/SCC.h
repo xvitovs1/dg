@@ -19,7 +19,9 @@ public:
     using SCC_component_t = std::vector<NodeT *>;
     using SCC_t = std::vector<SCC_component_t>;
 
-    SCC<NodeT>() : index(0) {}
+    SCC<NodeT>() = default;
+    SCC<NodeT>(SCC<NodeT>&&) = default;
+    SCC<NodeT>(const SCC<NodeT>&) = delete;
 
     // returns a vector of vectors - every inner vector
     // contains the nodes that for a SCC
@@ -47,7 +49,7 @@ public:
 
 private:
     ADT::QueueLIFO<NodeT *> stack;
-    unsigned index;
+    unsigned index{0};
 
     // container for the strongly connected components.
     SCC_t scc;
@@ -148,7 +150,7 @@ public:
                 // to the component of succ
                 for (NodeT *succ : node->getSuccessors()) {
                     unsigned succ_idx = succ->getSCCId();
-                    if ((int) succ_idx != idx)
+                    if (static_cast<int>(succ_idx) != idx)
                         nodes[idx].addSuccessor(succ_idx);
                 }
             }
@@ -169,6 +171,6 @@ public:
     }
 };
 
-} // analysis
-} // dg
+}  // namespace analysis
+}  // namespace dg
 #endif //  _DG_SCC_H_

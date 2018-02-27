@@ -260,6 +260,6 @@ RDMap::getObjectRange(const DefSite& ds)
     return std::equal_range(defs.begin(), defs.end(), what, comp);
 }
 
-} // rd
-} // analysis
-} // dg
+}  // namespace rd
+}  // namespace analysis
+}  // namespace dg

@@ -16,10 +16,10 @@ namespace analysis {
 
 struct DataFlowStatistics : public AnalysisStatistics {
     DataFlowStatistics()
-        : AnalysisStatistics(), bblocksNum(0), iterationsNum(0) {}
+        : AnalysisStatistics() {}
 
-    uint64_t bblocksNum;
-    uint64_t iterationsNum;
+    uint64_t bblocksNum{0};
+    uint64_t iterationsNum{0};
 
     uint64_t getBBlocksNum() const { return bblocksNum; }
     uint64_t getIterationsNum() const { return iterationsNum; }
@@ -150,7 +150,7 @@ public:
         : BBlockDataFlowAnalysis<NodeT>(entryBB, fl) {};
 
     /* virtual */
-    bool runOnBlock(BBlock<NodeT> *B)
+    bool runOnBlock(BBlock<NodeT> *B) override
     {
         bool changed = false;
         NodeT *prev = nullptr;

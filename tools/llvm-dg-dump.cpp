@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 
     debug::TimeMeasure tm;
 
-    // TODO refactor the code...
+    // TODO(mchalupa): refactor the code...
     LLVMDependenceGraph d;
     LLVMPointerAnalysis *PTA = new LLVMPointerAnalysis(M);
 
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         const char *sc[] = {
             slicing_criterion,
             "klee_assume",
-            NULL
+            nullptr
         };
 
         tm.start();

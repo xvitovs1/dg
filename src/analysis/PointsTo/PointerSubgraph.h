@@ -375,10 +375,10 @@ public:
 
 class PointerSubgraph
 {
-    unsigned int dfsnum;
+    unsigned int dfsnum = 0;
 
     // root of the pointer state subgraph
-    PSNode *root;
+    PSNode *root = nullptr;
 
     unsigned int last_node_id = 0;
     std::vector<PSNode *> nodes;
@@ -389,7 +389,7 @@ public:
             delete n;
     }
 
-    PointerSubgraph() : dfsnum(0), root(nullptr) {
+    PointerSubgraph() {
         nodes.reserve(128);
         // nodes[0] is nullptr (the node with id 0)
         nodes.push_back(nullptr);

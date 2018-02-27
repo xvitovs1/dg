@@ -43,7 +43,7 @@ public:
     : PTType(PS), builder(b) {}
 
     // build new subgraphs on calls via pointer
-    virtual bool functionPointerCall(PSNode *callsite, PSNode *called)
+    bool functionPointerCall(PSNode *callsite, PSNode *called) override
     {
         // with vararg it may happen that we get pointer that
         // is not to function, so just bail out here in that case

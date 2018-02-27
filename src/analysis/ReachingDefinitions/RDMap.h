@@ -92,10 +92,10 @@ extern RDNode *UNKNOWN_MEMORY;
 // improvements that will be handy in our set-up
 class RDNodesSet {
     std::set<RDNode *> nodes;
-    bool is_unknown;
+    bool is_unknown{false};
 
 public:
-    RDNodesSet() : is_unknown(false) {}
+    RDNodesSet() = default;
 
     // the set contains unknown mem. location
     void makeUnknown()
@@ -159,13 +159,13 @@ public:
     using iterator = MapT::iterator;
     using const_iterator = MapT::const_iterator;
 
-    RDMap() {}
+    RDMap() = default;
     RDMap(const RDMap& o);
 
     bool merge(const RDMap *o,
                DefSiteSetT *without = nullptr,
                bool strong_update_unknown = true,
-               uint32_t max_set_size  = (~((uint32_t) 0)),
+               uint32_t max_set_size  = (~(static_cast<uint32_t>(0))),
                bool merge_unknown     = false);
     bool add(const DefSite&, RDNode *n);
     bool update(const DefSite&, RDNode *n);
@@ -204,8 +204,8 @@ private:
      MapT defs;
 };
 
-} // rd
-} // analysis
-} // dg
+}  // namespace rd
+}  // namespace analysis
+}  // namespace dg
 
 #endif

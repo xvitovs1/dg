@@ -69,8 +69,8 @@ const std::map<llvm::Value *,
 LLVMDependenceGraph::~LLVMDependenceGraph()
 {
     // delete nodes
-    for (auto I = begin(), E = end(); I != E; ++I) {
-        LLVMNode *node = I->second;
+    for (auto& I : *this) {
+        LLVMNode *node = I.second;
 
         if (node) {
             for (LLVMDependenceGraph *subgraph : node->getSubgraphs()) {
@@ -782,7 +782,7 @@ static bool match_callsite_name(LLVMNode *callNode, const std::vector<std::strin
 
 bool LLVMDependenceGraph::getCallSites(const char *name, std::set<LLVMNode *> *callsites)
 {
-    const char *names[] = {name, NULL};
+    const char *names[] = {name, nullptr};
     return getCallSites(names, callsites);
 }
 

@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 
@@ -16,7 +16,7 @@ class TestConstructors : public Test
 {
     TestConstructors() : Test("constructors test") {}
 
-    void test()
+    void test() override
     {
         TestDG d;
 
@@ -38,7 +38,7 @@ public:
     TestAdd() : Test("edges adding test")
     {}
 
-    void test()
+    void test() override
     {
         TestDG d;
         //TestNode n1, n2;
@@ -63,9 +63,9 @@ public:
         check(d.getEntry() == &n1, "BUG: Entry setter");
 
         int n = 0;
-        for (auto I = d.begin(), E = d.end(); I != E; ++I) {
+        for (auto& I : d) {
             ++n;
-            check((*I).second == &n1 || (*I).second == &n2,
+            check(I.second == &n1 || I.second == &n2,
                     "Got some garbage in nodes");
         }
 
@@ -139,7 +139,7 @@ public:
     TestContainer() : Test("container test")
     {}
 
-    void test()
+    void test() override
     {
 #if ENABLE_CFG
         TestNode n1(1);
@@ -172,7 +172,7 @@ public:
     TestCFG() : Test("CFG edges test")
     {}
 
-    void test()
+    void test() override
     {
 #if ENABLE_CFG
 
@@ -247,7 +247,7 @@ public:
     TestRemove() : Test("edges removing test")
     {}
 
-    void test()
+    void test() override
     {
         nodes_remove_edge_test();
         //nodes_isolate_test();
@@ -669,7 +669,7 @@ public:
     }
 #endif // ENABLE_CFG
 
-    void test()
+    void test() override
     {
         test1();
         test2();
@@ -680,7 +680,7 @@ public:
 }; // namespace tests
 }; // namespace dg
 
-int main(void)
+int main()
 {
     using namespace dg::tests;
     TestRunner Runner;

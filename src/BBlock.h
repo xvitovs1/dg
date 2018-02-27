@@ -54,7 +54,7 @@ public:
     };
 
     BBlock<NodeT>(NodeT *head = nullptr, DependenceGraphT *dg = nullptr)
-        : key(KeyT()), dg(dg), ipostdom(nullptr), slice_id(0)
+        : key(KeyT()), dg(dg), ipostdom(nullptr)
     {
         if (head) {
             append(head);
@@ -445,7 +445,7 @@ private:
     BBlockContainerT postDominators;
 
     // is this block in some slice?
-    uint64_t slice_id;
+    uint64_t slice_id{0};
 
     // delete nodes on destruction of the block
     bool delete_nodes_on_destr = false;

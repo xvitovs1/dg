@@ -360,8 +360,8 @@ public:
                LLVMReachingDefinitions *rd = nullptr)
         :RD(rd), opts(o) {}
 
-    virtual void emitFunctionAnnot (const llvm::Function *,
-                                    llvm::formatted_raw_ostream &os)
+    void emitFunctionAnnot (const llvm::Function *,
+                                    llvm::formatted_raw_ostream &os) override
     {
         // dump the slicer's setting to the file
         // for easier comprehension
@@ -386,8 +386,8 @@ public:
         }
     }
 
-    virtual void emitInstructionAnnot(const llvm::Instruction *I,
-                                      llvm::formatted_raw_ostream& os)
+    void emitInstructionAnnot(const llvm::Instruction *I,
+                                      llvm::formatted_raw_ostream& os) override
     {
         if (opts == 0)
             return;
@@ -406,8 +406,8 @@ public:
         emitNodeAnnotations(node, os);
     }
 
-    virtual void emitBasicBlockStartAnnot(const llvm::BasicBlock *B,
-                                          llvm::formatted_raw_ostream& os)
+    void emitBasicBlockStartAnnot(const llvm::BasicBlock *B,
+                                          llvm::formatted_raw_ostream& os) override
     {
         if (opts == 0)
             return;
@@ -612,7 +612,7 @@ public:
             "__VERIFIER_assume",
             "__VERIFIER_exit",
             "klee_assume",
-            NULL // termination
+            nullptr // termination
         };
 
         dg.getCallSites(sc, &callsites);
@@ -704,14 +704,14 @@ static void print_statistics(llvm::Module *M, const char *prefix = nullptr)
     uint64_t inum, bnum, fnum, gnum;
     inum = bnum = fnum = gnum = 0;
 
-    for (auto I = M->begin(), E = M->end(); I != E; ++I) {
+    for (auto& I : *M) {
         // don't count in declarations
-        if (I->size() == 0)
+        if (I.size() == 0)
             continue;
 
         ++fnum;
 
-        for (const BasicBlock& B : *I) {
+        for (const BasicBlock& B : I) {
             ++bnum;
             inum += B.size();
         }
@@ -745,7 +745,7 @@ static bool remove_unused_from_module(llvm::Module *M)
     // do not slice away these functions no matter what
     // FIXME do it a vector and fill it dynamically according
     // to what is the setup (like for sv-comp or general..)
-    const char *keep[] = {"main", "klee_assume", NULL};
+    const char *keep[] = {"main", "klee_assume", nullptr};
 
     // when erasing while iterating the slicer crashes
     // so set the to be erased values into container
@@ -754,8 +754,8 @@ static bool remove_unused_from_module(llvm::Module *M)
     std::set<GlobalVariable *> globals;
     std::set<GlobalAlias *> aliases;
 
-    for (auto I = M->begin(), E = M->end(); I != E; ++I) {
-        Function *func = &*I;
+    for (auto& I : *M) {
+        Function *func = &I;
         if (array_match(func->getName(), keep))
             continue;
 
@@ -810,8 +810,8 @@ static void make_declarations_external(llvm::Module *M)
     using namespace llvm;
 
     // iterate over all functions in module
-    for (auto I = M->begin(), E = M->end(); I != E; ++I) {
-        Function *func = &*I;
+    for (auto& I : *M) {
+        Function *func = &I;
         if (func->size() == 0) {
             // this will make sure that the linkage has right type
             func->deleteBody();

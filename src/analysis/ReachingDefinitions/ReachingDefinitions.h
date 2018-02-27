@@ -48,11 +48,11 @@ class RDNode : public SubgraphNode<RDNode> {
     RDNodeType type;
 
     // marks for DFS/BFS
-    unsigned int dfsid;
+    unsigned int dfsid = 0;
 public:
 
     RDNode(RDNodeType t = RDNodeType::NONE)
-    : SubgraphNode<RDNode>(0), type(t), dfsid(0) {}
+    : SubgraphNode<RDNode>(0), type(t) {}
 
     // this is the gro of this node, so make it public
     DefSiteSetT defs;
@@ -145,7 +145,7 @@ class ReachingDefinitionsAnalysis
 public:
     ReachingDefinitionsAnalysis(RDNode *r,
                                 bool field_insens = false,
-                                uint32_t max_set_sz = ~((uint32_t)0))
+                                uint32_t max_set_sz = ~(static_cast<uint32_t>(0)))
     : root(r), dfsnum(0), strong_update_unknown(field_insens), max_set_size(max_set_sz)
     {
         assert(r && "Root cannot be null");

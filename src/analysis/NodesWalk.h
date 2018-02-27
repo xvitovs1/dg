@@ -206,7 +206,7 @@ private:
 
     QueueT queue;
     // id of particular nodes walk
-    unsigned int run_id;
+    unsigned int run_id{};
     uint32_t options;
 };
 
@@ -358,7 +358,7 @@ private:
 
     QueueT queue;
     uint32_t flags;
-    unsigned int runid;
+    unsigned int runid{};
 };
 
 #endif
