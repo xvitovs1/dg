@@ -560,11 +560,12 @@ LLVMPointerSubgraphBuilder::createDynamicMemAlloc(const llvm::CallInst *CInst, M
 PSNodesSeq
 LLVMPointerSubgraphBuilder::createCallToFunction(const llvm::Function *F)
 {
-    PSNode *callNode, *returnNode;
+    PSNodeCall *callNode;
+    PSNode *returnNode;
 
     // the operands to the return node (which works as a phi node)
     // are going to be added when the subgraph is built
-    callNode = PS.create(PSNodeType::CALL, nullptr);
+    callNode = PSNodeCall::get(PS.create(PSNodeType::CALL));
     returnNode = PS.create(PSNodeType::CALL_RETURN, nullptr);
 
     returnNode->setPairedNode(callNode);
