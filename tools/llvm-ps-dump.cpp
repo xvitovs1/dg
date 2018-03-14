@@ -217,9 +217,9 @@ dumpPointerSubgraphData(PSNode *n, PTType type, bool dot = false)
             return;
 
         if (dot)
-            printf("\\n    Memory map: [%p]\\n", mm);
+            printf("\\n    Memory map: [%p]\\n", static_cast<void*>(mm));
         else
-            printf("    Memory map: [%p]\n", mm);
+            printf("    Memory map: [%p]\n", static_cast<void*>(mm));
 
         dumpMemoryMap(mm, 6, dot);
 
@@ -270,10 +270,11 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
     for (PSNode *node : nodes) {
         if (!node)
             continue;
-        printf("\tNODE%p [label=\"<%u> ", node, node->getID());
+        printf("\tNODE%p [label=\"<%u> ",
+               static_cast<void*>(node), node->getID());
         printName(node, true);
         printf("\\n--- parent ---\\n");
-        printf("%p \\n", node->getParent());
+        printf("%p \\n", static_cast<void*>(node->getParent()));
 
         PSNodeAlloc *alloc = PSNodeAlloc::get(node);
         if (alloc && (alloc->getSize() || alloc->isHeap() || alloc->isZeroInitialized()))
@@ -323,7 +324,8 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
             continue;
 
         for (PSNode *succ : node->getSuccessors())
-            printf("\tNODE%p -> NODE%p [penwidth=2]\n", node, succ);
+            printf("\tNODE%p -> NODE%p [penwidth=2]\n",
+                   static_cast<void*>(node), static_cast<void*>(succ));
     }
 
     printf("}\n");
@@ -353,7 +355,7 @@ int main(int argc, char *argv[])
     bool todot = false;
     const char *module = nullptr;
     PTType type = FLOW_INSENSITIVE;
-    uint64_t field_senitivity = Offset::UNKNOWN;
+    Offset field_senitivity = Offset::UNKNOWN;
 
     // parse options
     for (int i = 1; i < argc; ++i) {
@@ -364,7 +366,7 @@ int main(int argc, char *argv[])
             else if (strcmp(argv[i+1], "inv") == 0)
                 type = WITH_INVALIDATE;
         } else if (strcmp(argv[i], "-pta-field-sensitive") == 0) {
-            field_senitivity = (uint64_t) atoll(argv[i + 1]);
+            field_senitivity = Offset(atoll(argv[i + 1]));
         } else if (strcmp(argv[i], "-dot") == 0) {
             todot = true;
         } else if (strcmp(argv[i], "-v") == 0) {
@@ -395,7 +397,7 @@ int main(int argc, char *argv[])
 
     TimeMeasure tm;
 
-    LLVMPointerAnalysis PTA(M, field_senitivity);
+    LLVMPointerAnalysis PTA(M, *field_senitivity);
 
     tm.start();
 
