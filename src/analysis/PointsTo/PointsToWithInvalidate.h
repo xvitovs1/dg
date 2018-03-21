@@ -28,7 +28,7 @@ public:
 
     // this is an easy but not very efficient implementation,
     // works for testing
-    PointsToWithInvalidate(PointerSubgraph *ps)
+    PointsToWithInvalidate(PointerGraph *ps)
     : PointsToFlowSensitive(ps) {}
 
     bool beforeProcessed(PSNode *n) override

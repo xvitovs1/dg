@@ -33,7 +33,7 @@
 #include "ReachingDefinitions/ReachingDefinitions.h"
 #include "DefUse.h"
 
-#include "analysis/PointsTo/PointerSubgraph.h"
+#include "analysis/PointsTo/PointerGraph.h"
 #include "analysis/DFS.h"
 
 using dg::analysis::rd::LLVMReachingDefinitions;

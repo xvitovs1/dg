@@ -7,7 +7,7 @@
 #include <cstring>
 
 #include "analysis/SubgraphNode.h"
-#include "analysis/PointsTo/PointerSubgraph.h"
+#include "analysis/PointsTo/PointerGraph.h"
 #include "analysis/Offset.h"
 
 #include "BBlock.h"

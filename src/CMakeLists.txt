@@ -6,13 +6,13 @@ add_library(PTA SHARED
 	analysis/Offset.cpp
 	analysis/PointsTo/Pointer.h
 	analysis/PointsTo/Pointer.cpp
-	analysis/PointsTo/PointerSubgraph.h
+	analysis/PointsTo/PointerGraph.h
 	analysis/PointsTo/PointerAnalysis.h
 	analysis/PointsTo/PointerAnalysis.cpp
 	analysis/PointsTo/PointsToFlowInsensitive.h
 	analysis/PointsTo/PointsToFlowSensitive.h
-	analysis/PointsTo/PointerSubgraphValidator.h
-	analysis/PointsTo/PointerSubgraphValidator.cpp
+	analysis/PointsTo/PointerGraphValidator.h
+	analysis/PointsTo/PointerGraphValidator.cpp
 )
 
 add_library(RD SHARED
@@ -32,10 +32,10 @@ add_library(RD SHARED
 add_library(LLVMpta SHARED
 	llvm/MemAllocationFuncs.cpp
 	llvm/analysis/PointsTo/PointsTo.h
-	llvm/analysis/PointsTo/PointerSubgraph.h
-	llvm/analysis/PointsTo/PointerSubgraph.cpp
-	llvm/analysis/PointsTo/PointerSubgraphValidator.h
-	llvm/analysis/PointsTo/PointerSubgraphValidator.cpp
+	llvm/analysis/PointsTo/PointerGraph.h
+	llvm/analysis/PointsTo/PointerGraph.cpp
+	llvm/analysis/PointsTo/PointerGraphValidator.h
+	llvm/analysis/PointsTo/PointerGraphValidator.cpp
 	llvm/analysis/PointsTo/Structure.cpp
 	llvm/analysis/PointsTo/Globals.cpp
 )
@@ -101,8 +101,8 @@ install(FILES
 install(FILES
 	analysis/PointsTo/PointerAnalysis.h
 	analysis/PointsTo/Pointer.h
-	analysis/PointsTo/PointerSubgraph.h
-	analysis/PointsTo/PointerSubgraphValidator.h
+	analysis/PointsTo/PointerGraph.h
+	analysis/PointsTo/PointerGraphValidator.h
 	analysis/PointsTo/PointsToFlowInsensitive.h
 	analysis/PointsTo/PointsToFlowSensitive.h
 	analysis/PointsTo/PointsToWithInvalidate.h
@@ -117,8 +117,8 @@ install(FILES
 	llvm/Slicer.h
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/llvm-dg/llvm/)
 install(FILES
-	llvm/analysis/PointsTo/PointerSubgraph.h
-	llvm/analysis/PointsTo/PointerSubgraphValidator.h
+	llvm/analysis/PointsTo/PointerGraph.h
+	llvm/analysis/PointsTo/PointerGraphValidator.h
 	llvm/analysis/PointsTo/PointsTo.h
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/llvm-dg/llvm/analysis/PointsTo/)
 install(FILES

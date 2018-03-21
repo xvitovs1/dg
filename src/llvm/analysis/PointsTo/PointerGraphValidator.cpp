@@ -1,5 +1,5 @@
 #include <llvm/IR/Value.h>
-#include "PointerSubgraphValidator.h"
+#include "PointerGraphValidator.h"
 
 namespace dg {
 namespace analysis {
@@ -11,7 +11,7 @@ static const llvm::Value *getValue(PSNode *nd) {
 }
 
 /*
- *void LLVMPointerSubgraphValidator::reportInvalNumberOfOperands(PSNode *nd) {
+ *void LLVMPointerGraphValidator::reportInvalNumberOfOperands(PSNode *nd) {
  *}
  */
 

@@ -1,4 +1,4 @@
-#include "PointerSubgraphValidator.h"
+#include "PointerGraphValidator.h"
 
 namespace dg {
 namespace analysis {
@@ -6,7 +6,7 @@ namespace pta {
 namespace debug {
 
 
-void PointerSubgraphValidator::reportInvalNumberOfOperands(const PSNode *nd) {
+void PointerGraphValidator::reportInvalNumberOfOperands(const PSNode *nd) {
     errors += "Invalid number of operands for " + std::string(PSNodeTypeToCString(nd->getType())) +
               " with ID " + std::to_string(nd->getID()) + "\n  - operands: [";
     for (unsigned i = 0, e =  nd->getOperandsNum(); i < e; ++i) {
@@ -17,7 +17,7 @@ void PointerSubgraphValidator::reportInvalNumberOfOperands(const PSNode *nd) {
     errors += "]\n";
 }
 
-bool PointerSubgraphValidator::checkOperands() {
+bool PointerGraphValidator::checkOperands() {
     bool invalid = false;
 
     for (const PSNode *nd : PS->getNodes()) {
@@ -65,7 +65,7 @@ bool PointerSubgraphValidator::checkOperands() {
     return invalid;
 }
 
-bool PointerSubgraphValidator::validate() {
+bool PointerGraphValidator::validate() {
     bool invalid = false;
 
     invalid |= checkOperands();

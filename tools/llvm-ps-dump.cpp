@@ -193,7 +193,7 @@ dumpMemoryMap(PointsToFlowSensitive::MemoryMapT *mm, int ind, bool dot)
 }
 
 static void
-dumpPointerSubgraphData(PSNode *n, PTType type, bool dot = false)
+dumpPointerGraphData(PSNode *n, PTType type, bool dot = false)
 {
     assert(n && "No node given");
     if (type == FLOW_INSENSITIVE) {
@@ -255,12 +255,12 @@ dumpPSNode(PSNode *n, PTType type)
             printf(" + %lu\n", *ptr.offset);
     }
     if (verbose) {
-        dumpPointerSubgraphData(n, type);
+        dumpPointerGraphData(n, type);
     }
 }
 
 static void
-dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
+dumpPointerGraphdot(LLVMPointerAnalysis *pta, PTType type)
 {
 
     printf("digraph \"Pointer State Subgraph\" {\n");
@@ -301,7 +301,7 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
         }
 
         if (verbose)
-            dumpPointerSubgraphData(node, type, true /* dot */);
+            dumpPointerGraphData(node, type, true /* dot */);
 
         printf("\", shape=box");
         if (node->getType() != PSNodeType::STORE) {
@@ -332,12 +332,12 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
 }
 
 static void
-dumpPointerSubgraph(LLVMPointerAnalysis *pta, PTType type, bool todot)
+dumpPointerGraph(LLVMPointerAnalysis *pta, PTType type, bool todot)
 {
     assert(pta);
 
     if (todot)
-        dumpPointerSubgraphdot(pta, type);
+        dumpPointerGraphdot(pta, type);
     else {
         const auto& nodes = pta->getNodes();
         for (PSNode *node : nodes) {
@@ -422,7 +422,7 @@ int main(int argc, char *argv[])
 
     tm.stop();
     tm.report("INFO: Points-to analysis [new] took");
-    dumpPointerSubgraph(&PTA, type, todot);
+    dumpPointerGraph(&PTA, type, todot);
 
     return 0;
 }

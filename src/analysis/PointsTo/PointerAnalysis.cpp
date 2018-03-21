@@ -1,5 +1,5 @@
 #include "Pointer.h"
-#include "PointerSubgraph.h"
+#include "PointerGraph.h"
 #include "PointerAnalysis.h"
 
 namespace dg {

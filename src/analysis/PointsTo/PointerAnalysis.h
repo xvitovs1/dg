@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "Pointer.h"
-#include "PointerSubgraph.h"
+#include "PointerGraph.h"
 #include "ADT/Queue.h"
 
 #include "analysis/SCC.h"
@@ -21,9 +21,9 @@ extern PSNode *UNKNOWN_MEMORY;
 class PointerAnalysis
 {
     // the pointer state subgraph
-    PointerSubgraph *PS;
+    PointerGraph *PS;
 
-    // strongly connected components of the PointerSubgraph
+    // strongly connected components of the PointerGraph
     std::vector<std::vector<PSNode *> > SCCs;
 
     // Maximal offset that we want to keep
@@ -48,12 +48,12 @@ protected:
                          preprocess_geps(true), invalidate_nodes(false) {}
 
 public:
-    PointerAnalysis(PointerSubgraph *ps,
+    PointerAnalysis(PointerGraph *ps,
                     Offset::type max_off = Offset::UNKNOWN,
                     bool prepro_geps = true, bool invalid_nodes = false)
     : PS(ps), max_offset(max_off), preprocess_geps(prepro_geps), invalidate_nodes(invalid_nodes)
     {
-        assert(PS && "Need valid PointerSubgraph object");
+        assert(PS && "Need valid PointerGraph object");
 
         // compute the strongly connected components
         if (prepro_geps) {
@@ -67,7 +67,7 @@ public:
     // takes a PSNode 'where' and 'what' and reference to a vector
     // and fills into the vector the objects that are relevant
     // for the PSNode 'what' (valid memory states for of this PSNode)
-    // on location 'where' in PointerSubgraph
+    // on location 'where' in PointerGraph
     virtual void getMemoryObjects(PSNode *where, const Pointer& pointer,
                                   std::vector<MemoryObject *>& objects) = 0;
 
@@ -90,7 +90,7 @@ public:
         return false;
     }
 
-    PointerSubgraph *getPS() const { return PS; }
+    PointerGraph *getPS() const { return PS; }
 
     void preprocessGEPs()
     {
@@ -180,7 +180,7 @@ public:
         return false;
     }
 
-    // adjust the PointerSubgraph on function pointer call
+    // adjust the PointerGraph on function pointer call
     // @ where is the callsite
     // @ what is the function that is being called
     virtual bool functionPointerCall(PSNode * /*where*/, PSNode * /*what*/)

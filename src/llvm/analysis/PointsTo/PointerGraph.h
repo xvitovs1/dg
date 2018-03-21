@@ -1,5 +1,5 @@
-#ifndef _LLVM_DG_POINTER_SUBGRAPH_H_
-#define _LLVM_DG_POINTER_SUBGRAPH_H_
+#ifndef _LLVM_DG_POINTER_GRAPH_H_
+#define _LLVM_DG_POINTER_GRAPH_H_
 
 #include <unordered_map>
 
@@ -9,7 +9,7 @@
 #include <llvm/IR/Constants.h>
 
 #include "llvm/MemAllocationFuncs.h"
-#include "analysis/PointsTo/PointerSubgraph.h"
+#include "analysis/PointsTo/PointerGraph.h"
 #include "analysis/PointsTo/Pointer.h"
 
 namespace dg {
@@ -18,9 +18,9 @@ namespace pta {
 
 using PSNodesSeq = std::pair<PSNode *, PSNode *>;
 
-class LLVMPointerSubgraphBuilder
+class LLVMPointerGraphBuilder
 {
-    PointerSubgraph PS;
+    PointerGraph PS;
 
     const llvm::Module *M;
     const llvm::DataLayout *DL;
@@ -40,7 +40,7 @@ class LLVMPointerSubgraphBuilder
     PSNodesSeq buildInstruction(const llvm::Instruction&);
     PSNode *buildNode(const llvm::Value *val);
 
-    void buildPointerSubgraphBlock(const llvm::BasicBlock& block);
+    void buildPointerGraphBlock(const llvm::BasicBlock& block);
 
     PSNodesSeq buildArguments(const llvm::Function& F);
     PSNodesSeq buildGlobals();
@@ -80,14 +80,14 @@ public:
     // \param field_sensitivity -- how much should be the PS field sensitive:
     //        Offset::UNKNOWN means full field sensitivity, 0 means field insensivity
     //        (every pointer with offset greater than 0 will have Offset::UNKNOWN)
-    LLVMPointerSubgraphBuilder(const llvm::Module *m,
+    LLVMPointerGraphBuilder(const llvm::Module *m,
                                Offset::type field_sensitivity = Offset::UNKNOWN)
         : PS(), M(m), DL(new llvm::DataLayout(m)), field_sensitivity(field_sensitivity)
         {}
 
-    ~LLVMPointerSubgraphBuilder();
+    ~LLVMPointerGraphBuilder();
 
-    PointerSubgraph *buildLLVMPointerSubgraph();
+    PointerGraph *buildLLVMPointerGraph();
 
     // create subgraph of function @F (the nodes)
     // and call+return nodes to/from it. This function

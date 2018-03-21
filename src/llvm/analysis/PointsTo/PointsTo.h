@@ -20,27 +20,27 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "analysis/PointsTo/PointerSubgraph.h"
+#include "analysis/PointsTo/PointerGraph.h"
 #include "analysis/PointsTo/PointerAnalysis.h"
 #include "llvm/llvm-utils.h"
-#include "llvm/analysis/PointsTo/PointerSubgraph.h"
+#include "llvm/analysis/PointsTo/PointerGraph.h"
 #include "analysis/PointsTo/PointsToWithInvalidate.h"
 
 namespace dg {
 
-using analysis::pta::PointerSubgraph;
+using analysis::pta::PointerGraph;
 using analysis::pta::PSNode;
-using analysis::pta::LLVMPointerSubgraphBuilder;
+using analysis::pta::LLVMPointerGraphBuilder;
 using analysis::pta::PSNodesSeq;
 using analysis::Offset;
 
 template <typename PTType>
 class LLVMPointerAnalysisImpl : public PTType
 {
-    LLVMPointerSubgraphBuilder *builder;
+    LLVMPointerGraphBuilder *builder;
 
 public:
-    LLVMPointerAnalysisImpl(PointerSubgraph *PS, LLVMPointerSubgraphBuilder *b)
+    LLVMPointerAnalysisImpl(PointerGraph *PS, LLVMPointerGraphBuilder *b)
     : PTType(PS), builder(b) {}
 
     // build new subgraphs on calls via pointer
@@ -108,7 +108,7 @@ public:
         assert(val2);
 
         // due to int2ptr we may have spurious loads
-        // in PointerSubgraph. Don't do anything in this case
+        // in PointerGraph. Don't do anything in this case
         if (!val->getType()->isPointerTy())
             return false;
 
@@ -122,14 +122,14 @@ public:
 
 class LLVMPointerAnalysis
 {
-    PointerSubgraph *PS = nullptr;
-    LLVMPointerSubgraphBuilder *builder;
+    PointerGraph *PS = nullptr;
+    LLVMPointerGraphBuilder *builder;
 
 public:
 
     LLVMPointerAnalysis(const llvm::Module *m,
                         uint64_t field_sensitivity = Offset::UNKNOWN)
-        : builder(new LLVMPointerSubgraphBuilder(m, field_sensitivity)) {}
+        : builder(new LLVMPointerGraphBuilder(m, field_sensitivity)) {}
 
     ~LLVMPointerAnalysis()
     {
@@ -157,14 +157,14 @@ public:
         return PS->getNodes();
     }
 
-    PointerSubgraph *getPS() { return PS; }
-    const PointerSubgraph *getPS() const { return PS; }
+    PointerGraph *getPS() { return PS; }
+    const PointerGraph *getPS() const { return PS; }
 
     template <typename PTType>
     void run()
     {
         // build the subgraph
-        PS = builder->buildLLVMPointerSubgraph();
+        PS = builder->buildLLVMPointerGraph();
         if (!PS) {
             llvm::errs() << "Pointer Subgraph was not built, aborting\n";
             abort();
@@ -179,12 +179,12 @@ public:
     // this method creates PointerAnalysis object and returns it.
     // It is alternative to run() method, but it does not delete all
     // the analysis data as the run() (like memory objects and so on).
-    // run() preserves only PointerSubgraph and the builder
+    // run() preserves only PointerGraph and the builder
     template <typename PTType>
     analysis::pta::PointerAnalysis *createPTA()
     {
         // build the subgraph
-        PS = builder->buildLLVMPointerSubgraph();
+        PS = builder->buildLLVMPointerGraph();
         if (!PS) {
             llvm::errs() << "Pointer Subgraph was not built, aborting\n";
             abort();
@@ -200,7 +200,7 @@ inline void LLVMPointerAnalysis::run<analysis::pta::PointsToWithInvalidate>()
 {
     // build the subgraph
     builder->setInvalidateNodesFlag(true);
-    PS = builder->buildLLVMPointerSubgraph();
+    PS = builder->buildLLVMPointerGraph();
     if (!PS) {
         llvm::errs() << "Pointer Subgraph was not built, aborting\n";
         abort();
@@ -217,7 +217,7 @@ inline analysis::pta::PointerAnalysis *LLVMPointerAnalysis::createPTA<analysis::
 {
     // build the subgraph
     builder->setInvalidateNodesFlag(true);
-    PS = builder->buildLLVMPointerSubgraph();
+    PS = builder->buildLLVMPointerGraph();
     if (!PS) {
         llvm::errs() << "Pointer Subgraph was not built, aborting\n";
         abort();

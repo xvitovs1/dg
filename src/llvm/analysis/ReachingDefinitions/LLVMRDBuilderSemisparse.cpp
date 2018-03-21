@@ -35,8 +35,8 @@
 
 
 #include "analysis/ReachingDefinitions/ReachingDefinitions.h"
-#include "analysis/PointsTo/PointerSubgraph.h"
-#include "llvm/analysis/PointsTo/PointerSubgraph.h"
+#include "analysis/PointsTo/PointerGraph.h"
+#include "llvm/analysis/PointsTo/PointerGraph.h"
 #include "llvm/llvm-utils.h"
 #include "llvm/analysis/ReachingDefinitions/LLVMRDBuilderSemisparse.h"
 

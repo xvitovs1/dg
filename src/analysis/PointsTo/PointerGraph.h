@@ -1,5 +1,5 @@
-#ifndef _DG_POINTER_SUBGRAPH_H_
-#define _DG_POINTER_SUBGRAPH_H_
+#ifndef _DG_POINTER_GRAPH_H_
+#define _DG_POINTER_GRAPH_H_
 
 #include <cassert>
 #include <vector>
@@ -17,7 +17,7 @@ namespace pta {
 
 void getNodes(std::set<PSNode *>& cont, PSNode *n, PSNode *exit, unsigned int dfsnum);
 
-class PointerSubgraph
+class PointerGraph
 {
     unsigned int dfsnum;
 
@@ -28,12 +28,12 @@ class PointerSubgraph
     std::vector<PSNode *> nodes;
 
 public:
-    ~PointerSubgraph() {
+    ~PointerGraph() {
         for (PSNode *n : nodes)
             delete n;
     }
 
-    PointerSubgraph() : dfsnum(0), root(nullptr) {
+    PointerGraph() : dfsnum(0), root(nullptr) {
         nodes.reserve(128);
         // nodes[0] is nullptr (the node with id 0)
         nodes.push_back(nullptr);
@@ -42,10 +42,10 @@ public:
     const std::vector<PSNode *>& getNodes() const { return nodes; }
     size_t size() const { return nodes.size(); }
 
-    PointerSubgraph(PointerSubgraph&&) = default;
-    PointerSubgraph& operator=(PointerSubgraph&&) = default;
-    PointerSubgraph(const PointerSubgraph&) = delete;
-    PointerSubgraph operator=(const PointerSubgraph&) = delete;
+    PointerGraph(PointerGraph&&) = default;
+    PointerGraph& operator=(PointerGraph&&) = default;
+    PointerGraph(const PointerGraph&) = delete;
+    PointerGraph operator=(const PointerGraph&) = delete;
 
     PSNode *getRoot() const { return root; }
     void setRoot(PSNode *r) {

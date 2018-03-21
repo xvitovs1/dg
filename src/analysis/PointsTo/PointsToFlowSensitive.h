@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "Pointer.h"
-#include "PointerSubgraph.h"
+#include "PointerGraph.h"
 
 namespace dg {
 namespace analysis {
@@ -19,7 +19,7 @@ public:
 
     // this is an easy but not very efficient implementation,
     // works for testing
-    PointsToFlowSensitive(PointerSubgraph *ps)
+    PointsToFlowSensitive(PointerGraph *ps)
     : PointerAnalysis(ps, Offset::UNKNOWN, false)
     {
         memoryMaps.reserve(ps->size() / 5);
