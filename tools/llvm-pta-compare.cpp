@@ -71,7 +71,7 @@ static void
 printName(PSNode *node)
 {
     if (!node->getUserData<llvm::Value>()) {
-        printf("%p", node);
+        printf("%p", static_cast<void*>(node));
         return;
     }
 
