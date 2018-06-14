@@ -342,20 +342,9 @@ private:
         }
     }
 
-    void dump_parameters(NodeT *node, int ind)
-    {
-        DGParameters<NodeT> *params = node->getParameters();
-
-        if (params) {
-            dump_parameters(params, ind, false);
-        }
-    }
-
-    void dump_parameters(DependenceGraph<NodeT> *g, int ind)
-    {
-        DGParameters<NodeT> *params = g->getParameters();
-
-        if (params) {
+    template <typename T>
+    void dump_parameters(T *x, int ind) {
+        if (DGParameters<NodeT> *params = x->getParameters()) {
             dump_parameters(params, ind, true);
         }
     }
@@ -371,17 +360,17 @@ private:
         // dumpBB(params->getBBOut(), data);
 
         // dump all the nodes again to get the names
-        for (auto it : *params) {
+        for (auto& it : *params) {
             DGParameter<NodeT>& p = it.second;
             if (p.in) {
-                dump_node(p.in, ind, formal ? "[f] IN ARG" : "IN ARG");
-                dump_node_edges(p.in, ind);
+                dump_node(p.getIn(), ind, formal ? "[f] IN ARG" : "IN ARG");
+                dump_node_edges(p.getIn(), ind);
             } else
                 out << "NO IN ARG";
 
             if (p.out) {
-                dump_node(p.out, ind, formal ? "[f] OUT ARG" : "OUT ARG");
-                dump_node_edges(p.out, ind);
+                dump_node(p.getOut(), ind, formal ? "[f] OUT ARG" : "OUT ARG");
+                dump_node_edges(p.getOut(), ind);
             } else
                 out << "NO OUT ARG";
         }
@@ -389,30 +378,29 @@ private:
         for (auto I = params->global_begin(), E = params->global_end();
              I != E; ++I) {
             DGParameter<NodeT>& p = I->second;
-            if (p.in) {
-                dump_node(p.in, ind, formal ? "[f] GLOB IN" : "GLOB IN");
-                dump_node_edges(p.in, ind);
+            if (p.getIn()) {
+                dump_node(p.getIn(), ind, formal ? "[f] GLOB IN" : "GLOB IN");
+                dump_node_edges(p.getIn(), ind);
             } else
                 out << "NO GLOB IN ARG";
 
-            if (p.out) {
-                dump_node(p.out, ind, formal ? "[f] GLOB OUT" : "GLOB OUT");
-                dump_node_edges(p.out, ind);
+            if (p.getOut()) {
+                dump_node(p.getOut(), ind, formal ? "[f] GLOB OUT" : "GLOB OUT");
+                dump_node_edges(p.getOut(), ind);
             } else
                 out << "NO GLOB OUT ARG";
         }
 
-        DGParameter<NodeT> *p = params->getVarArg();
-        if (p) {
-            if (p->in) {
-                dump_node(p->in, ind, "[va] IN ARG");
-                dump_node_edges(p->in, ind);
+        if (DGParameter<NodeT> *p = params->getVarArg()) {
+            if (p->getIn()) {
+                dump_node(p->getIn(), ind, "[va] IN ARG");
+                dump_node_edges(p->getIn(), ind);
             } else
                 out << "NO IN va ARG";
 
-            if (p->out) {
-                dump_node(p->out, ind, "[va] OUT ARG");
-                dump_node_edges(p->out, ind);
+            if (p->getOut()) {
+                dump_node(p->getOut(), ind, "[va] OUT ARG");
+                dump_node_edges(p->getOut(), ind);
             } else
                 out << "NO OUT ARG";
         }

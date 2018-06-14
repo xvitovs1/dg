@@ -148,27 +148,27 @@ private:
             // because there we don't add definitions with new analyses
             if (params && !RD) {
                 for (auto& it : *params) {
-                    os << "  ; PARAMS: in " << it.second.in
-                       << ", out " << it.second.out << "\n";
+                    os << "  ; PARAMS: in " << it.second.getIn()
+                       << ", out " << it.second.getOut() << "\n";
 
                     // dump edges for parameters
                     os <<"  ; in edges\n";
-                    emitNodeAnnotations(it.second.in, os);
+                    emitNodeAnnotations(it.second.getIn(), os);
                     os << "  ; out edges\n";
-                    emitNodeAnnotations(it.second.out, os);
+                    emitNodeAnnotations(it.second.getOut(), os);
                     os << "\n";
                 }
 
                 for (auto it = params->global_begin(), et = params->global_end();
                      it != et; ++it) {
-                    os << "  ; PARAM GL: in " << it->second.in
-                       << ", out " << it->second.out << "\n";
+                    os << "  ; PARAM GL: in " << it->second.getIn()
+                       << ", out " << it->second.getOut() << "\n";
 
                     // dump edges for parameters
                     os << "  ; in edges\n";
-                    emitNodeAnnotations(it->second.in, os);
+                    emitNodeAnnotations(it->second.getIn(), os);
                     os << "  ; out edges\n";
-                    emitNodeAnnotations(it->second.out, os);
+                    emitNodeAnnotations(it->second.getOut(), os);
                     os << "\n";
                 }
             }

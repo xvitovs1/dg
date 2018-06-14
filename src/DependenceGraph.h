@@ -164,9 +164,8 @@ public:
             return it->second;
 
         if (formalParameters) {
-            auto p = formalParameters->find(k);
-            if (p)
-                return p->in;
+            if (auto p = formalParameters->find(k))
+                return p->getIn();
         }
 
         return getGlobalNode(k);

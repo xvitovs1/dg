@@ -140,13 +140,13 @@ static void addGlobalsParams(LLVMDGParameters *params, LLVMNode *callNode, LLVMD
             pout->setDG(callNode->getDG());
             params->addGlobal(val, pin, pout);
         } else {
-            pin = act->in;
-            pout = act->out;
+            pin = act->getIn();
+            pout = act->getOut();
         }
 
         // connect the globals with edges
-        pin->addDataDependence(p.in);
-        p.out->addDataDependence(pout);
+        pin->addDataDependence(p.getIn());
+        p.getOut()->addDataDependence(pout);
 
         // add control dependence from call node
         callNode->addControlDependence(pin);
@@ -178,21 +178,19 @@ static void addDynMemoryParams(LLVMDGParameters *params, LLVMNode *callNode, LLV
             pout->setDG(callNode->getDG());
             params->add(val, pin, pout);
         } else {
-            pin = act->in;
-            pout = act->out;
+            pin = act->getIn();
+            pout = act->getOut();
         }
 
         // connect the params with edges
-        pin->addDataDependence(p.in);
-        p.out->addDataDependence(pout);
+        pin->addDataDependence(p.getIn());
+        p.getOut()->addDataDependence(pout);
 
         // add control dependence from call node
         callNode->addControlDependence(pin);
         callNode->addControlDependence(pout);
     }
 }
-
-
 
 static void addOperandsParams(LLVMDGParameters *params,
                               LLVMDGParameters *formal,
@@ -223,8 +221,8 @@ static void addOperandsParams(LLVMDGParameters *params,
             out->setDG(callNode->getDG());
             params->add(opval, in, out);
         } else {
-            in = ap->in;
-            out = ap->out;
+            in = ap->getIn();
+            out = ap->getOut();
         }
 
         // add control edges from the call-site node
@@ -233,9 +231,9 @@ static void addOperandsParams(LLVMDGParameters *params,
         callNode->addControlDependence(out);
 
         // from actual in to formal in
-        in->addDataDependence(fp->in);
+        in->addDataDependence(fp->getIn());
         // from formal out to actual out
-        fp->out->addDataDependence(out);
+        fp->getOut()->addDataDependence(out);
     }
 }
 

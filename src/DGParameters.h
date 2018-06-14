@@ -6,6 +6,7 @@
 
 #include <map>
 #include <utility>
+#include <memory>
 
 #include "BBlock.h"
 
@@ -14,42 +15,42 @@ namespace dg {
 template <typename NodeT>
 struct DGParameter
 {
-    DGParameter<NodeT>(NodeT *v1, NodeT *v2)
-        : in(v1), out(v2) {}
+    DGParameter<NodeT>(NodeT *v1, NodeT *v2) : in(v1), out(v2) {}
 
     // input value of parameter
-    NodeT *in;
+    std::unique_ptr<NodeT> in;
     // output value of parameter
-    NodeT *out;
+    std::unique_ptr<NodeT> out;
 
-    void removeIn()
-    {
+    NodeT *getIn() { return in.get(); }
+    NodeT *getOut() { return out.get(); }
+
+    void removeIn() {
         if (in) {
             in->isolate();
-            delete in;
-            in = nullptr;
+            in.reset();
         }
     }
 
-    void removeOut()
-    {
+    void removeOut() {
         if (out) {
             out->isolate();
-            delete out;
-            out = nullptr;
+            out.reset();
         }
     }
 };
 
-// --------------------------------------------------------
+// -------------------------------------------------------------------------
 // --- Parameters of functions
 //
-//  DGParameters keep list of function parameters (arguments).
-//  Each parameter is a pair - input and output value and is
-//  represented as a node in the dependence graph.
+//  DGParameters class keeps a list of function parameters (arguments).
+//  There are also globals and a special vararg parameter
+//  if globals are taken as parameters and/or if the function is variadic.
+//  Each parameter is a pair -- input and output value and is
+//  implemented as a pair of regular nodes in the dependence graph.
 //  Moreover, there are BBlocks for input and output parameters
-//  so that the parameters can be used in BBlock analysis
-// --------------------------------------------------------
+//  so that the parameters can be used in BBlock analysis.
+// -------------------------------------------------------------------------
 template <typename NodeT>
 class DGParameters
 {
@@ -60,31 +61,7 @@ public:
     using const_iterator = typename ContainerType::const_iterator;
 
     DGParameters<NodeT>(NodeT *cs = nullptr)
-    : vararg(nullptr), BBIn(new BBlock<NodeT>), BBOut(new BBlock<NodeT>), callSite(cs){}
-
-    ~DGParameters<NodeT>()
-    {
-        // delete the parameters itself
-        for (const auto& par : *this) {
-            delete par.second.in;
-            delete par.second.out;
-        }
-
-        // delete globals parameters
-        for (const auto& gl : globals) {
-            delete gl.second.in;
-            delete gl.second.out;
-        }
-
-#ifdef ENABLE_CFG
-        // delete auxiliary basic blocks
-        delete BBIn;
-        delete BBOut;
-#endif
-
-        // delete vararg argument
-        delete vararg;
-    }
+    : BBIn(new BBlock<NodeT>), BBOut(new BBlock<NodeT>), callSite(cs){}
 
     DGParameter<NodeT> *operator[](KeyT k) { return find(k); }
     const DGParameter<NodeT> *operator[](KeyT k) const { return find(k); }
@@ -171,18 +148,18 @@ public:
     iterator global_end() { return globals.end(); }
     const_iterator global_end() const { return globals.end(); }
 
-    const BBlock<NodeT> *getBBIn() const { return BBIn; }
-    const BBlock<NodeT> *getBBOut() const { return BBOut; }
-    BBlock<NodeT> *getBBIn() { return BBIn; }
-    BBlock<NodeT> *getBBOut() { return BBOut; }
+    const BBlock<NodeT> *getBBIn() const { return BBIn.get(); }
+    const BBlock<NodeT> *getBBOut() const { return BBOut.get(); }
+    BBlock<NodeT> *getBBIn() { return BBIn.get(); }
+    BBlock<NodeT> *getBBOut() { return BBOut.get(); }
 
-    DGParameter<NodeT>* getVarArg() { return vararg; }
-    const DGParameter<NodeT>* getVarArg() const { return vararg; }
+    DGParameter<NodeT>* getVarArg() { return vararg.get(); }
+    const DGParameter<NodeT>* getVarArg() const { return vararg.get(); }
     bool setVarArg(NodeT *in, NodeT *out)
     {
         assert(!vararg && "Already has a vararg parameter");
 
-        vararg = new DGParameter<NodeT>(in, out);
+        vararg.reset(new DGParameter<NodeT>(in, out));
         return true;
     }
 
@@ -199,11 +176,12 @@ private:
     // this is parameter that represents
     // formal vararg parameters. It is only one, because without
     // any further analysis, we cannot tell apart the formal varargs
-    DGParameter<NodeT> *vararg;
+    std::unique_ptr<DGParameter<NodeT>> vararg;
 
-    BBlock<NodeT> *BBIn;
-    BBlock<NodeT> *BBOut;
-    NodeT *callSite;
+    std::unique_ptr<BBlock<NodeT>> BBIn;
+    std::unique_ptr<BBlock<NodeT>> BBOut;
+
+    NodeT *callSite{nullptr};
 
     DGParameter<NodeT> *find(KeyT k, ContainerType *C)
     {
@@ -216,8 +194,7 @@ private:
 
     bool add(KeyT k, NodeT *val_in, NodeT *val_out, ContainerType *C)
     {
-        auto v = std::make_pair(k, DGParameter<NodeT>(val_in, val_out));
-        if (!C->insert(v).second)
+        if (!C->emplace(k, DGParameter<NodeT>(val_in, val_out)).second)
             // we already has param with this key
             return false;
 
