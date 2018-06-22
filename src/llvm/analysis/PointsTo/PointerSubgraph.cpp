@@ -802,6 +802,26 @@ PointerSubgraph *LLVMPointerSubgraphBuilder::buildLLVMPointerSubgraph()
     }
 #endif // NDEBUG
 
+    PointerSubgraphOptimizer opt(&PS);
+    auto rem_nodes = opt.run();
+    llvm::errs() << "Optimized away " << rem_nodes << " nodes\n";
+    composeMapping(std::move(opt.getMapping()));
+
+#ifndef NDEBUG
+    if (validator.validate()) {
+        llvm::errs() << validator.getWarnings();
+
+        llvm::errs() << "Pointer Subgraph is broken (after optimizations)!\n";
+        assert(!validator.getErrors().empty());
+        llvm::errs() << validator.getErrors();
+        return nullptr;
+    } else {
+        llvm::errs() << validator.getWarnings();
+    }
+#endif // NDEBUG
+
+
+
     return &PS;
 }
 
