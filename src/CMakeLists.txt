@@ -1,10 +1,24 @@
 if (LLVM_DG)
 
-add_library(PTA SHARED
-	analysis/SubgraphNode.h
-	analysis/Offset.h
+add_library(DGAnalysis SHARED
 	analysis/Offset.cpp
+
+	analysis/Offset.h
 	analysis/PointsTo/Pointer.h
+	analysis/SCC.h
+
+        analysis/Analysis.h
+	analysis/SubgraphNode.h
+        analysis/ControlExpression/ControlExpression.h
+        analysis/ControlExpression/CENode.h
+
+	ADT/DGContainer.h
+	ADT/Bitvector.h
+	ADT/Bits.h
+	ADT/NumberSet.h
+)
+
+add_library(PTA SHARED
 	analysis/PointsTo/PointsToSet.h
 	analysis/PointsTo/MemoryObject.h
 	analysis/PointsTo/Pointer.cpp
@@ -16,11 +30,9 @@ add_library(PTA SHARED
 	analysis/PointsTo/PointerSubgraphValidator.h
 	analysis/PointsTo/PointerSubgraphValidator.cpp
 )
+target_link_libraries(PTA PUBLIC DGAnalysis)
 
 add_library(RD SHARED
-	analysis/SubgraphNode.h
-	analysis/Offset.h
-	analysis/Offset.cpp
 	analysis/ReachingDefinitions/ReachingDefinitions.h
 	analysis/ReachingDefinitions/ReachingDefinitions.cpp
 	analysis/ReachingDefinitions/RDMap.h
@@ -30,6 +42,7 @@ add_library(RD SHARED
 	analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.h
 	analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.cpp
 )
+target_link_libraries(RD PUBLIC DGAnalysis)
 
 add_library(LLVMpta SHARED
 	llvm/MemAllocationFuncs.cpp
@@ -44,7 +57,6 @@ add_library(LLVMpta SHARED
 	llvm/analysis/PointsTo/Instructions.cpp
 	llvm/analysis/PointsTo/Calls.cpp
 )
-
 target_link_libraries(LLVMpta PUBLIC PTA)
 
 add_library(LLVMrd SHARED
@@ -63,10 +75,6 @@ add_library(LLVMdg SHARED
 	BBlock.h
 	Node.h
 	DependenceGraph.h
-	ADT/DGContainer.h
-	ADT/Bitvector.h
-	ADT/Bits.h
-	ADT/NumberSet.h
 	# -- LLVM
 	llvm/LLVMNode.h
 	llvm/LLVMNode.cpp
@@ -86,7 +94,7 @@ target_link_libraries(LLVMdg
 			PUBLIC LLVMpta
 			PUBLIC LLVMrd)
 
-install(TARGETS LLVMdg LLVMpta LLVMrd PTA RD
+install(TARGETS LLVMdg LLVMpta LLVMrd PTA RD DGAnalysis
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES
