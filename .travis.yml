@@ -50,11 +50,12 @@ install:
   - cd ..
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=DEBUG .
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZERS=on .
   - make -j2
   - cd tests
   - make
-  - DG_TESTS_PTA="$PTA" DG_TESTS_RDA="$RDA" make test
+  # for now turn off the detection of leaks, we're working on it
+  - ASAN_OPTIONS=detect_leaks=0 DG_TESTS_PTA="$PTA" DG_TESTS_RDA="$RDA" make test
 
 notifications:
     email: false
