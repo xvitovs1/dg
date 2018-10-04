@@ -50,9 +50,8 @@ install:
   - cd ..
 
 script:
-  # gcc in the versions that we use does not know the undefined sanitizer
-  - export CXX_FLAGS="-fsanitize=address"
-  - test "$CXX" = "clang++" && export CXX_FLAGS="$CXX_FLAGS -fsanitize=undefined"
+  # gcc in the versions that we use has problems with sanitizers
+  - test "$CXX" = "clang++" && export CXX_FLAGS="-fsanitize=undefined,address"
   - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS=$CXX_FLAGS .
   - make -j2
   - cd tests
