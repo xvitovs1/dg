@@ -32,6 +32,34 @@ namespace srg {
 class RDNode;
 class ReachingDefinitionsAnalysis;
 
+// FIXME: we are now temporarily using two types of blocks, unify them
+class RDBBlock {
+public:
+    using NodeT = RDNode;
+    using ContainerT = std::vector<RDBBlock *>;
+    using NodesContainerT = std::vector<RDNode *>;
+    using iterator = NodesContainerT::iterator;
+    using const_iterator = NodesContainerT::const_iterator;
+
+    void append(RDNode *nd) { _nodes.push_back(nd); }
+    void addSuccessor(RDBBlock *s) {
+        _successors.push_back(s);
+        s->_predecessors.push_back(this);
+    }
+
+    iterator begin() { return _nodes.begin(); }
+    const_iterator begin() const { return _nodes.begin(); }
+    iterator end() { return _nodes.end(); }
+    const_iterator end() const { return _nodes.end(); }
+
+private:
+    NodesContainerT _nodes;
+    ContainerT _successors;
+    ContainerT _predecessors;
+};
+
+
+
 // here the types are for type-checking (optional - user can do it
 // when building the graph) and for later optimizations
 enum class RDNodeType {
@@ -62,12 +90,17 @@ class RDNode : public SubgraphNode<RDNode> {
     RDNodeType type;
 
     BBlock<RDNode> *bblock = nullptr;
+    RDBBlock *rdbblock{nullptr};
     // marks for DFS/BFS
-    unsigned int dfsid;
+    unsigned int dfsid{0};
+
 public:
 
+    RDNode(unsigned int id, RDNodeType t = RDNodeType::NONE)
+    : SubgraphNode<RDNode>(id), type(t) {}
+
     RDNode(RDNodeType t = RDNodeType::NONE)
-    : SubgraphNode<RDNode>(0), type(t), dfsid(0) {}
+    : SubgraphNode<RDNode>(0), type(t) {}
 
     // this is the gro of this node, so make it public
     DefSiteSetT defs;
@@ -212,6 +245,9 @@ public:
     void setBasicBlock(BBlock<RDNode> *bb) {
         bblock = bb;
     }
+
+    RDBBlock *getBBlock2() { return rdbblock; }
+    void setBBlock(RDBBlock *b) { rdbblock = b; }
 
     void removeCDs() {
     }

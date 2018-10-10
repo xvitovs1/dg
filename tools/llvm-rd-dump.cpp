@@ -224,10 +224,42 @@ dumpRDdot(LLVMReachingDefinitions *RD, bool dump_rd)
     RD->getNodes(nodes);
 
     printf("digraph \"Reaching Definitions Subgraph\" {\n");
+    std::set<RDNode *> dumped;
 
-    /* dump nodes */
+    /* dump blocks */
+    for (const auto& block : RD->getBlocks()) {
+        printf("subgraph cluster_bb_%p{\n", block.get());
+        printf("\tstyle=filled; fillcolor=lightgrey; node [style=filled,color=white];\n");
+
+        for (auto node : *block) {
+            dumped.insert(node);
+            printf("\tNODE%p [label=\"[%p]", static_cast<void*>(node), static_cast<void*>(block.get()));
+            printName(node, true);
+            if (node->getSize() > 0)
+                printf("\\n[size: %lu]\\n", node->getSize());
+            printf("\\n-------------\\n");
+            if (verbose) {
+                dumpDefines(node, true);
+                printf("-------------\\n");
+                dumpOverwrites(node, true);
+                printf("-------------\\n");
+                dumpUses(node, true);
+            }
+                dumpMap(node, true /* dot */);
+
+            printf("\" shape=box]\n");
+        }
+
+        printf("} /* cluster_bb_%p */\n\n", block.get());
+    }
+
+
+    /* dump remaining nodes if there are any */
     for(RDNode *node : nodes) {
-        printf("\tNODE%p [label=\"", static_cast<void*>(node));
+        if (dumped.count(node) != 0)
+            continue;
+
+        printf("\tNODE%p [label=\"[%p]", static_cast<void*>(node), static_cast<void*>(node->getBBlock2()));
         printName(node, true);
         if (node->getSize() > 0)
             printf("\\n[size: %lu]\\n", node->getSize());

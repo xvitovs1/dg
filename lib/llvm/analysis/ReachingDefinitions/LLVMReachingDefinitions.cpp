@@ -49,6 +49,14 @@ RDNode *LLVMReachingDefinitions::getMapping(const llvm::Value *val) {
 }
 
 
+const std::vector<std::unique_ptr<RDBBlock>>&
+LLVMReachingDefinitions::getBlocks() const {
+    assert(builder);
+    return builder->_blocks;
+}
+
+
+
 
 } // namespace rd
 } // namespace dg

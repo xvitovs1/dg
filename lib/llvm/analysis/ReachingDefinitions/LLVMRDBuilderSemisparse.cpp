@@ -86,7 +86,7 @@ static uint64_t getAllocatedSize(const llvm::AllocaInst *AI,
 
 RDNode *LLVMRDBuilderSemisparse::createAlloc(const llvm::Instruction *Inst, RDBlock *rb)
 {
-    RDNode *node = new RDNode(RDNodeType::ALLOC);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::ALLOC);
     addNode(Inst, node);
     rb->append(node);
 
@@ -101,7 +101,7 @@ RDNode *LLVMRDBuilderSemisparse::createDynAlloc(const llvm::Instruction *Inst, M
 {
     using namespace llvm;
 
-    RDNode *node = new RDNode(RDNodeType::DYN_ALLOC);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::DYN_ALLOC);
     addNode(Inst, node);
     rb->append(node);
 
@@ -140,7 +140,7 @@ RDNode *LLVMRDBuilderSemisparse::createDynAlloc(const llvm::Instruction *Inst, M
 
 RDNode *LLVMRDBuilderSemisparse::createRealloc(const llvm::Instruction *Inst, RDBlock *rb)
 {
-    RDNode *node = new RDNode(RDNodeType::DYN_ALLOC);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::DYN_ALLOC);
     addNode(Inst, node);
     rb->append(node);
 
@@ -196,7 +196,7 @@ static void getLocalVariables(const llvm::Function *F,
 
 RDNode *LLVMRDBuilderSemisparse::createReturn(const llvm::Instruction *Inst, RDBlock *rb)
 {
-    RDNode *node = new RDNode(RDNodeType::RETURN);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::RETURN);
     addNode(Inst, node);
     rb->append(node);
 
@@ -392,7 +392,7 @@ std::vector<DefSite> LLVMRDBuilderSemisparse::getPointsTo(const llvm::Value *val
 RDNode *LLVMRDBuilderSemisparse::createLoad(const llvm::Instruction *Inst, RDBlock *rb)
 {
     const llvm::LoadInst *LI = static_cast<const llvm::LoadInst *>(Inst);
-    RDNode *node = new RDNode(RDNodeType::LOAD);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::LOAD);
     addNode(Inst, node);
     rb->append(node);
 
@@ -411,7 +411,7 @@ RDNode *LLVMRDBuilderSemisparse::createLoad(const llvm::Instruction *Inst, RDBlo
 
 RDNode *LLVMRDBuilderSemisparse::createStore(const llvm::Instruction *Inst, RDBlock *rb)
 {
-    RDNode *node = new RDNode(RDNodeType::STORE);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::STORE);
     addNode(Inst, node);
     rb->append(node);
 
@@ -501,7 +501,7 @@ LLVMRDBuilderSemisparse::buildBlock(const llvm::BasicBlock& block)
 
     // the first node is dummy and serves as a phi from previous
     // blocks so that we can have proper mapping
-    RDNode *node = new RDNode(RDNodeType::PHI);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::PHI);
     RDNode *last_node = node;
 
     addNode(node);
@@ -641,8 +641,8 @@ LLVMRDBuilderSemisparse::createCallToFunction(const llvm::Function *F, RDBlock *
     RDNode *callNode, *returnNode;
 
     // dummy nodes for easy generation
-    callNode = new RDNode(RDNodeType::CALL);
-    returnNode = new RDNode(RDNodeType::CALL_RETURN);
+    callNode = LLVMRDBuilder::createNode(RDNodeType::CALL);
+    returnNode = LLVMRDBuilder::createNode(RDNodeType::CALL_RETURN);
 
     // do not leak the memory of returnNode (the callNode
     // will be added to nodes_map)
@@ -693,8 +693,8 @@ LLVMRDBuilderSemisparse::buildFunction(const llvm::Function& F)
     // create root and (unified) return nodes of this subgraph. These are
     // just for our convenience when building the graph, they can be
     // optimized away later since they are noops
-    RDNode *root = new RDNode(RDNodeType::NOOP);
-    RDNode *ret = new RDNode(RDNodeType::NOOP);
+    RDNode *root = LLVMRDBuilder::createNode(RDNodeType::NOOP);
+    RDNode *ret = LLVMRDBuilder::createNode(RDNodeType::NOOP);
 
     // emplace new subgraph to avoid looping with recursive functions
     subgraphs_map.emplace(&F, Subgraph(root, ret));
@@ -771,7 +771,7 @@ RDNode *LLVMRDBuilderSemisparse::createUndefinedCall(const llvm::CallInst *CInst
 {
     using namespace llvm;
 
-    RDNode *node = new RDNode(RDNodeType::CALL);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::CALL);
     addNode(CInst, node);
     rb->append(node);
 
@@ -855,7 +855,7 @@ RDNode *LLVMRDBuilderSemisparse::createIntrinsicCall(const llvm::CallInst *CInst
             // we create this node because this nodes works
             // as ALLOC in points-to, so we can have
             // reaching definitions to that
-            ret = new RDNode(RDNodeType::CALL);
+            ret = LLVMRDBuilder::createNode(RDNodeType::CALL);
             ret->addDef(ret, 0, Offset::UNKNOWN);
             pts2 = PTA->getPointsTo(I->getOperand(0));
             assert(pts2 && "No points-to information");
@@ -896,7 +896,7 @@ RDNode *LLVMRDBuilderSemisparse::createIntrinsicCall(const llvm::CallInst *CInst
             return createUndefinedCall(CInst, rb);
     }
 
-    ret = new RDNode(RDNodeType::CALL);
+    ret = LLVMRDBuilder::createNode(RDNodeType::CALL);
     rb->append(ret);
     addNode(CInst, ret);
 
@@ -1065,8 +1065,8 @@ LLVMRDBuilderSemisparse::createCall(const llvm::Instruction *Inst, RDBlock *rb)
                     assert(!ret_call);
 
                     // create the new nodes lazily
-                    call_funcptr = new RDNode(RDNodeType::CALL);
-                    ret_call = new RDNode(RDNodeType::CALL_RETURN);
+                    call_funcptr = LLVMRDBuilder::createNode(RDNodeType::CALL);
+                    ret_call = LLVMRDBuilder::createNode(RDNodeType::CALL_RETURN);
                     addNode(CInst, call_funcptr);
                     addNode(ret_call);
                 }
@@ -1164,7 +1164,7 @@ RDBlock *LLVMRDBuilderSemisparse::buildGlobals()
         prev = cur;
 
         // every global node is like memory allocation
-        cur = new RDNode(RDNodeType::ALLOC);
+        cur = LLVMRDBuilder::createNode(RDNodeType::ALLOC);
         cur->setSize(getGlobalVariableSize(&*I, DL));
         // some global variables are initialized on creation
         if (I->hasInitializer())

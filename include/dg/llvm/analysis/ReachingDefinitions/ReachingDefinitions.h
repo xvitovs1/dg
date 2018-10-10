@@ -84,6 +84,8 @@ public:
     RDNode *getRoot();
     RDNode *getNode(const llvm::Value *val);
 
+    const std::vector<std::unique_ptr<RDBBlock>>& getBlocks() const;
+
     // let the user get the nodes map, so that we can
     // map the points-to informatio back to LLVM nodes
     const std::unordered_map<const llvm::Value *, RDNode *>& getNodesMap() const;

@@ -18,6 +18,11 @@ namespace rd {
 
 class LLVMRDBuilder
 {
+    unsigned next_node_id{0};
+    unsigned int nextID() {
+        return ++next_node_id;
+    }
+
 protected:
     const llvm::Module *M;
     const llvm::DataLayout *DL;
@@ -55,6 +60,12 @@ public:
                   dg::LLVMPointerAnalysis *p,
                   const LLVMReachingDefinitionsAnalysisOptions& opts)
         : M(m), DL(new llvm::DataLayout(m)), _options(opts), PTA(p) {}
+
+    std::vector<std::unique_ptr<RDBBlock>> _blocks;
+
+    RDNode *createNode(RDNodeType t) {
+        return new RDNode(nextID(), t);
+    }
 
     virtual ~LLVMRDBuilder() {
         // delete data layout

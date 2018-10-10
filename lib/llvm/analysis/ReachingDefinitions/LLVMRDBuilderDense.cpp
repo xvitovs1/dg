@@ -37,6 +37,7 @@
 #include "dg/llvm/analysis/PointsTo/PointerSubgraph.h"
 
 #include "llvm/analysis/ReachingDefinitions/LLVMRDBuilderDense.h"
+#include "dg/analysis/BBlocksBuilder.h"
 #include "llvm/llvm-utils.h"
 #include "llvm/MemAllocationFuncs.h"
 
@@ -85,7 +86,7 @@ static uint64_t getAllocatedSize(const llvm::AllocaInst *AI,
 
 RDNode *LLVMRDBuilderDense::createAlloc(const llvm::Instruction *Inst)
 {
-    RDNode *node = new RDNode(RDNodeType::ALLOC);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::ALLOC);
     addNode(Inst, node);
 
     if (const llvm::AllocaInst *AI
@@ -99,7 +100,7 @@ RDNode *LLVMRDBuilderDense::createDynAlloc(const llvm::Instruction *Inst, MemAll
 {
     using namespace llvm;
 
-    RDNode *node = new RDNode(RDNodeType::DYN_ALLOC);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::DYN_ALLOC);
     addNode(Inst, node);
 
     const CallInst *CInst = cast<CallInst>(Inst);
@@ -137,7 +138,7 @@ RDNode *LLVMRDBuilderDense::createDynAlloc(const llvm::Instruction *Inst, MemAll
 
 RDNode *LLVMRDBuilderDense::createRealloc(const llvm::Instruction *Inst)
 {
-    RDNode *node = new RDNode(RDNodeType::DYN_ALLOC);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::DYN_ALLOC);
     addNode(Inst, node);
 
     uint64_t size = getConstantValue(Inst->getOperand(1));
@@ -190,7 +191,7 @@ static void getLocalVariables(const llvm::Function *F,
 
 RDNode *LLVMRDBuilderDense::createReturn(const llvm::Instruction *Inst)
 {
-    RDNode *node = new RDNode(RDNodeType::RETURN);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::RETURN);
     addNode(Inst, node);
 
     // FIXME: don't do that for every return instruction,
@@ -249,7 +250,7 @@ RDNode *LLVMRDBuilderDense::createNode(const llvm::Instruction &Inst)
 
 RDNode *LLVMRDBuilderDense::createStore(const llvm::Instruction *Inst)
 {
-    RDNode *node = new RDNode(RDNodeType::STORE);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::STORE);
     addNode(Inst, node);
 
     pta::PSNode *pts = PTA->getPointsTo(Inst->getOperand(1));
@@ -403,7 +404,7 @@ LLVMRDBuilderDense::buildBlock(const llvm::BasicBlock& block)
 
     // the first node is dummy and serves as a phi from previous
     // blocks so that we can have proper mapping
-    RDNode *node = new RDNode(RDNodeType::PHI);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::PHI);
     RDNode *last_node = node;
 
     addNode(node);
@@ -496,8 +497,8 @@ LLVMRDBuilderDense::createCallToFunction(const llvm::Function *F)
     RDNode *callNode, *returnNode;
 
     // dummy nodes for easy generation
-    callNode = new RDNode(RDNodeType::CALL);
-    returnNode = new RDNode(RDNodeType::CALL_RETURN);
+    callNode = LLVMRDBuilder::createNode(RDNodeType::CALL);
+    returnNode = LLVMRDBuilder::createNode(RDNodeType::CALL_RETURN);
 
     // do not leak the memory of returnNode (the callNode
     // will be added to nodes_map)
@@ -542,8 +543,8 @@ LLVMRDBuilderDense::buildFunction(const llvm::Function& F)
     // create root and (unified) return nodes of this subgraph. These are
     // just for our convenience when building the graph, they can be
     // optimized away later since they are noops
-    RDNode *root = new RDNode(RDNodeType::NOOP);
-    RDNode *ret = new RDNode(RDNodeType::NOOP);
+    RDNode *root = LLVMRDBuilder::createNode(RDNodeType::NOOP);
+    RDNode *ret = LLVMRDBuilder::createNode(RDNodeType::NOOP);
 
     // emplace new subgraph to avoid looping with recursive functions
     subgraphs_map.emplace(&F, Subgraph(root, ret));
@@ -593,7 +594,7 @@ RDNode *LLVMRDBuilderDense::createUndefinedCall(const llvm::CallInst *CInst)
 {
     using namespace llvm;
 
-    RDNode *node = new RDNode(RDNodeType::CALL);
+    RDNode *node = LLVMRDBuilder::createNode(RDNodeType::CALL);
     addNode(CInst, node);
 
     // if we assume that undefined functions are pure
@@ -673,7 +674,7 @@ RDNode *LLVMRDBuilderDense::createIntrinsicCall(const llvm::CallInst *CInst)
             // we create this node because this nodes works
             // as ALLOC in points-to, so we can have
             // reaching definitions to that
-            ret = new RDNode(RDNodeType::CALL);
+            ret = LLVMRDBuilder::createNode(RDNodeType::CALL);
             ret->addDef(ret, 0, Offset::UNKNOWN);
             addNode(CInst, ret);
             return ret;
@@ -681,7 +682,7 @@ RDNode *LLVMRDBuilderDense::createIntrinsicCall(const llvm::CallInst *CInst)
             return createUndefinedCall(CInst);
     }
 
-    ret = new RDNode(RDNodeType::CALL);
+    ret = LLVMRDBuilder::createNode(RDNodeType::CALL);
     addNode(CInst, ret);
 
     pta::PSNode *pts = PTA->getPointsTo(dest);
@@ -815,8 +816,8 @@ LLVMRDBuilderDense::createCall(const llvm::Instruction *Inst)
                     assert(!ret_call);
 
                     // create the new nodes lazily
-                    call_funcptr = new RDNode(RDNodeType::CALL);
-                    ret_call = new RDNode(RDNodeType::CALL_RETURN);
+                    call_funcptr = LLVMRDBuilder::createNode(RDNodeType::CALL);
+                    ret_call = LLVMRDBuilder::createNode(RDNodeType::CALL_RETURN);
                     addNode(CInst, call_funcptr);
                     addNode(ret_call);
                 }
@@ -888,6 +889,16 @@ RDNode *LLVMRDBuilderDense::build()
         root = glob.first;
     }
 
+    std::set<unsigned> ids;
+    for (auto& it : nodes_map) {
+        assert(ids.insert(it.second->getID()).second
+               && "Duplicated ID");
+    }
+
+    BBlocksBuilder<RDBBlock> bblocksBuilder;
+    bblocksBuilder.buildBlocks(root);
+    _blocks = std::move(bblocksBuilder.getBlocks());
+
     return root;
 }
 
@@ -898,7 +909,7 @@ std::pair<RDNode *, RDNode *> LLVMRDBuilderDense::buildGlobals()
         prev = cur;
 
         // every global node is like memory allocation
-        cur = new RDNode(RDNodeType::ALLOC);
+        cur = LLVMRDBuilder::createNode(RDNodeType::ALLOC);
         addNode(&*I, cur);
 
         if (prev)
