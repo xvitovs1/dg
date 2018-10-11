@@ -23,7 +23,7 @@ class SparseRDGraphBuilder
 {
 public:
     using NodeT = dg::analysis::rd::RDNode;
-    using BlockT = BBlock<NodeT>;
+    using BlockT = RDBBlock;
 
     using VarT = DefSite;
 

@@ -8,7 +8,7 @@
 
 #include "dg/analysis/Offset.h"
 #include "dg/analysis/SubgraphNode.h"
-#include "dg/BBlock.h"
+#include "dg/DGBBlock.h"
 #include "dg/ADT/Queue.h"
 #include "dg/DGParameters.h"
 #include "dg/DependenceGraph.h"
@@ -31,6 +31,8 @@ namespace srg {
 
 class RDNode;
 class ReachingDefinitionsAnalysis;
+
+using RDBBlock = DGBBlock<RDNode>;
 
 // here the types are for type-checking (optional - user can do it
 // when building the graph) and for later optimizations
@@ -61,7 +63,7 @@ extern RDNode *UNKNOWN_MEMORY;
 class RDNode : public SubgraphNode<RDNode> {
     RDNodeType type;
 
-    BBlock<RDNode> *bblock = nullptr;
+    RDBBlock *bblock = nullptr;
     // marks for DFS/BFS
     unsigned int dfsid;
 public:
@@ -205,11 +207,11 @@ public:
         return nullptr;
     }
 
-    BBlock<RDNode> *getBBlock() {
+    RDBBlock *getBBlock() {
         return bblock;
     }
 
-    void setBasicBlock(BBlock<RDNode> *bb) {
+    void setBasicBlock(RDBBlock *bb) {
         bblock = bb;
     }
 

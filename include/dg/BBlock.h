@@ -1,8 +1,5 @@
-/// XXX add licence
-//
-
-#ifndef _BBLOCK_H_
-#define _BBLOCK_H_
+#ifndef _DG_BBLOCK_H_
+#define _DG_BBLOCK_H_
 
 #include <cassert>
 #include <list>
@@ -17,24 +14,23 @@
 namespace dg {
 
 /// ------------------------------------------------------------------
-// - BBlock
-//     Basic block structure for dependence graph
+//   BBlockBase
+//     Base for Basic blocks -- just a list of nodes and successors
+//     and predecessors of the blocks
 /// ------------------------------------------------------------------
-template <typename NodeT>
-class BBlock
-{
+template <typename NodeT, typename BBlockT>
+class BBlockBase {
 public:
-    using KeyT = typename NodeT::KeyType;
-    using DependenceGraphT = typename NodeT::DependenceGraphType;
-
     struct BBlockEdge {
-        BBlockEdge(BBlock<NodeT>* t, uint8_t label = 0)
+        using LabelT = uint32_t;
+
+        BBlockEdge(BBlockT* t, LabelT label = 0)
             : target(t), label(label) {}
 
-        BBlock<NodeT> *target;
+        BBlockT *target;
         // we'll have just numbers as labels now.
         // We can change it if there's a need
-        uint8_t label;
+        LabelT label;
 
         bool operator==(const BBlockEdge& oth) const
         {
@@ -43,7 +39,7 @@ public:
 
         bool operator!=(const BBlockEdge& oth) const
         {
-            return operator==(oth);
+            return !operator==(oth);
         }
 
         bool operator<(const BBlockEdge& oth) const
@@ -53,19 +49,9 @@ public:
         }
     };
 
-    BBlock<NodeT>(NodeT *head = nullptr, DependenceGraphT *dg = nullptr)
-        : key(KeyT()), dg(dg), ipostdom(nullptr), slice_id(0)
-    {
-        if (head) {
-            append(head);
-            assert(!dg || head->getDG() == nullptr || dg == head->getDG());
-        }
-    }
-
-    ~BBlock<NodeT>() {
-        if (delete_nodes_on_destr) {
-            for (NodeT *nd : nodes)
-                delete nd;
+    BBlockBase(NodeT *first = nullptr) {
+        if (first) {
+            append(first);
         }
     }
 
@@ -80,22 +66,9 @@ public:
     PredContainerT& predecessors() { return prevBBs; }
     const PredContainerT& predecessors() const { return prevBBs; }
 
-    const BBlockContainerT& controlDependence() const { return controlDeps; }
-    const BBlockContainerT& revControlDependence() const { return revControlDeps; }
-
-    // similary to nodes, basic blocks can have keys
-    // they are not stored anywhere, it is more due to debugging
-    void setKey(const KeyT& k) { key = k; }
-    const KeyT& getKey() const { return key; }
-
-    // XXX we should do it a common base with node
-    // to not duplicate this - something like
-    // GraphElement that would contain these attributes
-    void setDG(DependenceGraphT *d) { dg = d; }
-    DependenceGraphT *getDG() const { return dg; }
-
     const std::list<NodeT *>& getNodes() const { return nodes; }
     std::list<NodeT *>& getNodes() { return nodes; }
+
     bool empty() const { return nodes.empty(); }
     size_t size() const { return nodes.size(); }
 
@@ -103,7 +76,7 @@ public:
     {
         assert(n && "Cannot add null node to BBlock");
 
-        n->setBasicBlock(this);
+        n->setBasicBlock(static_cast<BBlockT *>(this));
         nodes.push_back(n);
     }
 
@@ -111,13 +84,8 @@ public:
     {
         assert(n && "Cannot add null node to BBlock");
 
-        n->setBasicBlock(this);
+        n->setBasicBlock(static_cast<BBlockT *>(this));
         nodes.push_front(n);
-    }
-
-    bool hasControlDependence() const
-    {
-        return !controlDeps.empty();
     }
 
     // return true if all successors point
@@ -183,65 +151,6 @@ public:
 
         // NOTE: nextBBs were cleared in removeSuccessors()
         prevBBs.clear();
-
-        // remove reverse edges to this BB
-        for (BBlock<NodeT> *B : controlDeps) {
-            // we don't want to corrupt the iterator
-            // if this block is control dependent on itself.
-            // We're gonna clear it anyway
-            if (B == this)
-                continue;
-
-            B->revControlDeps.erase(this);
-        }
-
-        // clear also cd edges that blocks have
-        // to this block
-        for (BBlock<NodeT> *B : revControlDeps) {
-            if (B == this)
-                continue;
-
-            B->controlDeps.erase(this);
-        }
-
-        revControlDeps.clear();
-        controlDeps.clear();
-    }
-
-    void remove(bool with_nodes = true)
-    {
-        // do not leave any dangling reference
-        isolate();
-
-        if (dg) {
-#ifndef NDEBUG
-            bool ret =
-#endif
-            dg->removeBlock(key);
-            assert(ret && "BUG: block was not in DG");
-            if (dg->getEntryBB() == this)
-                dg->setEntryBB(nullptr);
-        }
-
-        if (with_nodes) {
-            for (NodeT *n : nodes) {
-                // we must set basic block to nullptr
-                // otherwise the node will try to remove the
-                // basic block again if it is of size 1
-                n->setBasicBlock(nullptr);
-
-                // remove dependency edges, let be CFG edges
-                // as we'll destroy all the nodes
-                n->removeCDs();
-                n->removeDDs();
-                // remove the node from dg
-                n->removeFromDG();
-
-                delete n;
-            }
-        }
-
-        delete this;
     }
 
     void removeNode(NodeT *n) { nodes.remove(n); }
@@ -314,25 +223,6 @@ public:
         prevBBs.clear();
     }
 
-    bool addControlDependence(BBlock<NodeT> *b)
-    {
-        bool ret;
-#ifndef NDEBUG
-        bool ret2;
-#endif
-
-        ret = controlDeps.insert(b);
-#ifndef NDEBUG
-        ret2 =
-#endif
-        b->revControlDeps.insert(this);
-
-        // we either have both edges or none
-        assert(ret == ret2);
-
-        return ret;
-    }
-
     // get first node from bblock
     // or nullptr if the block is empty
     NodeT *getFirstNode() const
@@ -351,6 +241,88 @@ public:
             return nullptr;
 
         return nodes.back();
+    }
+
+private:
+    // nodes contained in this bblock
+    std::list<NodeT *> nodes;
+
+    SuccContainerT nextBBs;
+    PredContainerT prevBBs;
+};
+
+/// ------------------------------------------------------------------
+// - BBlock
+//     Basic block structure with additional information
+//     related to basic blocks
+/// ------------------------------------------------------------------
+template <typename NodeT> class BBlock;
+
+template <typename NodeT>
+class BBlock : public BBlockBase<NodeT, BBlock<NodeT>> {
+public:
+
+    using BBlockContainerT = typename BBlockBase<NodeT, BBlock<NodeT>>::BBlockContainerT;
+    using PredContainerT = typename BBlockBase<NodeT, BBlock<NodeT>>::PredContainerT;
+    using SuccContainerT = typename BBlockBase<NodeT, BBlock<NodeT>>::SuccContainerT;
+
+    BBlock<NodeT>(NodeT *head = nullptr) : BBlockBase<NodeT, BBlock<NodeT>>(head) {}
+
+    const BBlockContainerT& controlDependence() const { return controlDeps; }
+    const BBlockContainerT& revControlDependence() const { return revControlDeps; }
+
+    bool hasControlDependence() const
+    {
+        return !controlDeps.empty();
+    }
+
+    // remove all edges from/to this BB and reconnect them to
+    // other nodes
+    void isolate()
+    {
+        BBlockBase<NodeT, BBlock<NodeT>>::isolate();
+
+        // remove reverse edges to this BB
+        for (BBlock<NodeT> *B : controlDeps) {
+            // we don't want to corrupt the iterator
+            // if this block is control dependent on itself.
+            // We're gonna clear it anyway
+            if (B == this)
+                continue;
+
+            B->revControlDeps.erase(this);
+        }
+
+        // clear also cd edges that blocks have
+        // to this block
+        for (BBlock<NodeT> *B : revControlDeps) {
+            if (B == this)
+                continue;
+
+            B->controlDeps.erase(this);
+        }
+
+        revControlDeps.clear();
+        controlDeps.clear();
+    }
+
+    bool addControlDependence(BBlock<NodeT> *b)
+    {
+        bool ret;
+#ifndef NDEBUG
+        bool ret2;
+#endif
+
+        ret = controlDeps.insert(b);
+#ifndef NDEBUG
+        ret2 =
+#endif
+        b->revControlDeps.insert(this);
+
+        // we either have both edges or none
+        assert(ret == ret2);
+
+        return ret;
     }
 
     // XXX: do this optional?
@@ -442,23 +414,7 @@ public:
 
     uint64_t getSlice() const { return slice_id; }
 
-    void deleteNodesOnDestruction(bool v = true) {
-        delete_nodes_on_destr = v;
-    }
-
 private:
-    // optional key
-    KeyT key;
-
-    // reference to dg if needed
-    DependenceGraphT *dg;
-
-    // nodes contained in this bblock
-    std::list<NodeT *> nodes;
-
-    SuccContainerT nextBBs;
-    PredContainerT prevBBs;
-
     // when we have basic blocks, we do not need
     // to keep control dependencies in nodes, because
     // all nodes in block has the same control dependence
@@ -467,23 +423,20 @@ private:
 
     // post-dominator frontiers
     BBlockContainerT postDomFrontiers;
-    BBlock<NodeT> *ipostdom;
+    BBlock<NodeT> *ipostdom{nullptr};
     // the post-dominator tree edges
     // (reverse to immediate post-dominator)
     BBlockContainerT postDominators;
 
     // parent of @this in dominator tree
-    BBlock<NodeT> *idom = nullptr;
+    BBlock<NodeT> *idom{nullptr};
     // BB.dominators = all children in dominator tree
     BBlockContainerT dominators;
     // dominance frontiers
     BBlockContainerT domFrontiers;
 
     // is this block in some slice?
-    uint64_t slice_id;
-
-    // delete nodes on destruction of the block
-    bool delete_nodes_on_destr = false;
+    uint64_t slice_id{0};
 
     // auxiliary data for analyses
     std::set<NodeT *> callSites;
@@ -495,4 +448,4 @@ private:
 
 } // namespace dg
 
-#endif // _BBLOCK_H_
+#endif // _DG_BBLOCK_H_

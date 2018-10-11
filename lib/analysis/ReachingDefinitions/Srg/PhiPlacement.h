@@ -25,7 +25,7 @@ using PhiAdditions = std::unordered_map<BBlock<RDNode> *, std::set<DefSite>>;
 class PhiPlacement
 {
 private:
-    using RDBlock = BBlock<RDNode>;
+    using RDBlock = RDBBlock;
 
 public:
     PhiAdditions calculate(AssignmentMap&& am) const
@@ -40,9 +40,9 @@ public:
             while (!w.empty()) {
                 RDNode *n = w.back();
                 w.pop_back();
-                RDBlock *X = n->getBBlock();
+                auto X = n->getBBlock();
 
-                for (RDBlock* Y : X->getDomFrontiers()) {
+                for (auto Y : X->getDomFrontiers()) {
                     if (dfp.find(Y) == dfp.end()) {
 
                         for (RDNode *N : Y->getNodes()) {
